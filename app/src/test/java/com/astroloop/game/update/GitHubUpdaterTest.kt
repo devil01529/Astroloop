@@ -104,7 +104,9 @@ class GitHubUpdaterTest {
             shadowOf(activity.packageManager).setCanRequestPackageInstalls(false)
             updater.check()
             awaitDialog("Update available").getButton(AlertDialog.BUTTON_POSITIVE).performClick()
-            awaitDialog("Update verified").getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+            val verified = awaitDialog("Update verified")
+            assertTrue(shadowOf(verified).message.toString().contains("finish your current run first"))
+            verified.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
             shadowOf(Looper.getMainLooper()).idle()
             val permission = shadowOf(activity).nextStartedActivity
             assertEquals(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, permission.action)

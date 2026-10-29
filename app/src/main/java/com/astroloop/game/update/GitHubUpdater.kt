@@ -65,7 +65,7 @@ class GitHubUpdater internal constructor(
                     busy=false;dialog?.dismiss()
                     if(release.versionCode<=BuildConfig.VERSION_CODE) message("You're up to date","Installed: ${BuildConfig.VERSION_NAME}")
                     else dialog=AlertDialog.Builder(activity).setTitle("Update available")
-                        .setMessage("${BuildConfig.VERSION_NAME} → ${release.versionName}\n\nDownload size: ${(release.apkBytes+999999)/1000000} MB\n\nProgress stays on this phone. Android will ask you to approve installation.")
+                        .setMessage("${BuildConfig.VERSION_NAME} → ${release.versionName}\n\nDownload size: ${(release.apkBytes+999999)/1000000} MB\n\nSaved unlocks and settings stay on this phone. Installing restarts the game. Android will ask you to approve installation.")
                         .setNegativeButton("Later",null).setPositiveButton("Download") {_,_->download(release)}.show()
                 }
             } catch(e:Exception) {
@@ -146,7 +146,7 @@ class GitHubUpdater internal constructor(
 
     private fun offerInstall(file:File,release:UpdateRelease) {
         dialog=AlertDialog.Builder(activity).setTitle("Update verified")
-            .setMessage("${release.versionName} is ready. Keep the app installed to preserve your progress.")
+            .setMessage("${release.versionName} is ready. Installing restarts the game, so finish your current run first. Saved unlocks and settings are kept. Keep the existing app installed.")
             .setNegativeButton("Later",null).setPositiveButton("Install") {_,_->
                 if(Build.VERSION.SDK_INT>=26 && !activity.packageManager.canRequestPackageInstalls()) {
                     pendingInstall=file to release

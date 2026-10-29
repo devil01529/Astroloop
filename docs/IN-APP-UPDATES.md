@@ -10,6 +10,8 @@ Choose **Updates** in the right-edge pause/settings panel. If a newer version is
 available, choose **Download**, then **Install**. Android asks for installation
 approval; on Android 8+ it first asks you to allow installs from Astro Loop S24.
 Samsung Auto Blocker may independently prevent installation.
+Installing restarts the app: finish your current run before choosing Install.
+Saved unlocks and settings are preserved when updating in place.
 
 Everyone you share the APK with uses the same public release channel. No GitHub
 account, token, payment, or subscription is required. Updating never grants players
