@@ -54,10 +54,21 @@ Keep a private backup of the existing signing key: losing it breaks update conti
 
 ## Optional GitHub Actions signing
 
+The **Publish verified prebuilt APK** workflow can publish a locally signed release
+without uploading a private signing key. A `release-assets/` branch contains only
+the already-signed `astro-loop-s24.apk`, `update.json`, release notes, and this
+workflow. The job checks the APK against the public certificate fingerprint and
+the validation report in its source tag, generates the matching source ZIP, and
+publishes all four release assets. It never overwrites an already public release.
+This path is used when the ChatGPT connection cannot authenticate binary uploads
+to `uploads.github.com`; GitHub's own scoped Actions token handles publication.
+Update `docs/S24-VALIDATION.json` with the new APK hash before creating each source
+tag. The main branch remains source-only; APK payloads live on separate branches.
+
 The supplied `Signed Android release` workflow can build, test, sign, and publish
 future tagged releases. **Cloud signing is not configured:** the current ChatGPT
 GitHub integration rejects Actions secret access with HTTP 403. The initial release
-is built and signed in the build environment and published directly.
+is built and signed in the build environment and published by the prebuilt workflow.
 
 To enable cloud signing, a repository owner must securely configure these encrypted
 Actions repository secrets using the existing private signing material:

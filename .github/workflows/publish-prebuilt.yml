@@ -1,0 +1,93 @@
+name: Publish verified prebuilt APK
+on:
+  push:
+    branches: ['release-assets/**']
+  workflow_dispatch:
+    inputs:
+      artifact_ref:
+        description: 'Commit or release-assets branch containing the signed APK and update.json'
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: publish-prebuilt-s24
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.artifact_ref || github.sha }}
+          path: payload
+          persist-credentials: false
+      - name: Validate signed payload and identify source tag
+        id: payload
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os,re
+          from pathlib import Path
+          m=json.loads(Path('payload/update.json').read_text())
+          tag='v'+m['versionName']
+          assert re.fullmatch(r'v[A-Za-z0-9_.-]+',tag)
+          assert m['schemaVersion']==1 and m['versionCode']>0
+          assert m['apkUrl']==f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/{tag}/astro-loop-s24.apk"
+          apk=Path('payload/astro-loop-s24.apk')
+          assert apk.stat().st_size==m['apkBytes'] and 0<m['apkBytes']<=150*1024*1024
+          assert hashlib.sha256(apk.read_bytes()).hexdigest()==m['sha256']
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write('tag='+tag+'\n')
+          PY
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.payload.outputs.tag }}
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Verify APK signature, identity, version, and validated source
+        run: |
+          set -euo pipefail
+          sdkmanager 'build-tools;35.0.0'
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose payload/astro-loop-s24.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c 4 payload/astro-loop-s24.apk
+          actual_signer=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs payload/astro-loop-s24.apk | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+          test "$actual_signer" = "$(cat source/scripts/signing-certificate.sha256)"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging payload/astro-loop-s24.apk > badging.txt
+          python3 - <<'PY'
+          import json,re
+          from pathlib import Path
+          m=json.loads(Path('payload/update.json').read_text())
+          p=Path('badging.txt').read_text().splitlines()[0]
+          assert re.search(r"name='com\.astroloop\.game\.s24'",p)
+          assert int(re.search(r"versionCode='([0-9]+)'",p).group(1))==m['versionCode']
+          assert re.search(r"versionName='([^']+)'",p).group(1)==m['versionName']
+          report=json.loads(Path('source/docs/S24-VALIDATION.json').read_text())
+          assert report['apk_sha256']==m['sha256'], 'APK must match the validation report in the source tag'
+          assert report['tests']['failures']==report['tests']['errors']==0
+          PY
+          python3 source/scripts/check_release_version.py --manifest payload/update.json --repository "$GITHUB_REPOSITORY"
+      - name: Package matching source and checksums
+        run: |
+          mkdir release
+          cp payload/astro-loop-s24.apk payload/update.json release/
+          git -C source archive --format=zip --prefix=astro-loop-s24/ --output=../release/astro-loop-s24-source.zip HEAD
+          cd release
+          sha256sum astro-loop-s24.apk astro-loop-s24-source.zip update.json > SHA256SUMS.txt
+      - name: Upload verified assets and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.payload.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft > draft.json; then
+            python3 -c 'import json; assert json.load(open("draft.json"))["isDraft"], "Never overwrite a published release"'
+          else
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "Astro Loop S24 $RELEASE_TAG" --notes-file payload/release-notes.md
+          fi
+          gh release upload "$RELEASE_TAG" release/astro-loop-s24.apk release/update.json release/astro-loop-s24-source.zip release/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
