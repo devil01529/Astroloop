@@ -480,32 +480,35 @@ class VectorRenderer(
         shapeRenderer.setColor(asteroid.getColor())
         shapeRenderer.setStrokeWidth(2f)
 
-        if (asteroid.shapePoints.isNotEmpty()) {
-            // Fill with black to occlude stars behind asteroid
-            shapeRenderer.setColor(0xFF000000.toInt())
-            shapeRenderer.drawPolygon(
-                canvas,
-                asteroid.position.x,
-                asteroid.position.y,
-                asteroid.shapePoints,
-                asteroid.rotation,
-                filled = true
-            )
-            // Restore asteroid color for outline
-            shapeRenderer.setColor(asteroid.getColor())
-            shapeRenderer.drawPolygon(
-                canvas,
-                asteroid.position.x,
-                asteroid.position.y,
-                asteroid.shapePoints,
-                asteroid.rotation
-            )
-        } else {
-            // Small or shapeless asteroid — circle is visually identical and cheaper
-            shapeRenderer.setColor(0xFF000000.toInt())
-            shapeRenderer.drawCircle(canvas, asteroid.position.x, asteroid.position.y, asteroid.radius, true)
-            shapeRenderer.setColor(asteroid.getColor())
-            shapeRenderer.drawCircle(canvas, asteroid.position.x, asteroid.position.y, asteroid.radius)
+        if (!RealisticArt.drawAsteroid(canvas, asteroid)) {
+            if (asteroid.shapePoints.isNotEmpty()) {
+                // Fill with black to occlude stars behind asteroid
+                shapeRenderer.setColor(0xFF000000.toInt())
+                shapeRenderer.drawPolygon(
+                    canvas,
+                    asteroid.position.x,
+                    asteroid.position.y,
+                    asteroid.shapePoints,
+                    asteroid.rotation,
+                    filled = true
+                )
+                // Restore asteroid color for outline
+                shapeRenderer.setColor(asteroid.getColor())
+                shapeRenderer.drawPolygon(
+                    canvas,
+                    asteroid.position.x,
+                    asteroid.position.y,
+                    asteroid.shapePoints,
+                    asteroid.rotation
+                )
+            } else {
+                // Small or shapeless asteroid — circle is visually identical and cheaper
+                shapeRenderer.setColor(0xFF000000.toInt())
+                shapeRenderer.drawCircle(canvas, asteroid.position.x, asteroid.position.y, asteroid.radius, true)
+                shapeRenderer.setColor(asteroid.getColor())
+                shapeRenderer.drawCircle(canvas, asteroid.position.x, asteroid.position.y, asteroid.radius)
+            }
+
         }
 
         // Volatile asteroids pulse
@@ -640,6 +643,13 @@ class VectorRenderer(
             return
         }
 
+        if (projectile.weaponId == "pulse_cannon" || projectile.weaponId == "scatter_shot" ||
+            projectile.weaponId == "needle_gun") {
+            RealisticArt.drawRound(canvas, projectile.position.x, projectile.position.y,
+                projectile.velocity.angle(), projectile.width, projectile.length,
+                projectile.color, shapeRenderer.alphaScale)
+            return
+        }
         shapeRenderer.setStrokeWidth(projectile.width)
         val angle = projectile.velocity.angle()
         val tail = projectile.length
@@ -874,10 +884,9 @@ class VectorRenderer(
     }
 
     private fun renderFlak(canvas: Canvas, projectile: Projectile) {
-        shapeRenderer.setStrokeWidth(2f)
-        shapeRenderer.drawCircle(canvas, projectile.position.x, projectile.position.y, projectile.radius)
-        // Inner detail
-        shapeRenderer.drawCross(canvas, projectile.position.x, projectile.position.y, projectile.radius * 0.5f)
+        RealisticArt.drawRound(canvas, projectile.position.x, projectile.position.y,
+            projectile.velocity.angle(), projectile.radius * 1.4f, projectile.radius * 3f,
+            projectile.color, shapeRenderer.alphaScale)
     }
 
     private fun renderGravity(canvas: Canvas, projectile: Projectile) {

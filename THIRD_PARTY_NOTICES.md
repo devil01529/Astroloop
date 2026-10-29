@@ -32,3 +32,11 @@ the canonical family name; we do not ship a renamed or redesigned derivative.
 
 The SIL Open Font License applies only to the font files; it does not affect the
 license of the rest of this project's source code.
+
+## Custom S24 realistic artwork
+
+`app/src/main/res/drawable-nodpi/realistic_space_atlas.png` was generated for this
+custom S24 modification. It contains three hulls, three rocky materials, and three
+cannon assemblies. This added asset is supplied with the modified source under
+GPL-3.0-only. It is bundled locally; no image service or network access is used
+by the installed game.

@@ -34,6 +34,9 @@ class MainActivity : ComponentActivity() {
 
     private var hangarView: HangarSurfaceView? = null
     private var gameView: GameSurfaceView? = null
+    private var activityResumed = false
+    private var appUpdater: com.astroloop.game.update.GitHubUpdater? = null
+    private var settingsDialog: android.app.AlertDialog? = null
 
     private val inputRouter = InputRouter()
 
@@ -86,6 +89,10 @@ class MainActivity : ComponentActivity() {
             }
         }.also { inputManager.registerInputDeviceListener(it, null) }
 
+        com.astroloop.game.settings.PilotSettings.load(this)
+
+        appUpdater = com.astroloop.game.update.GitHubUpdater(this)
+
         // Keep screen on
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -134,7 +141,7 @@ class MainActivity : ComponentActivity() {
                 launchGame(shipId, pilotId)
             }
         }
-        setContentView(hangarView)
+        setSceneContent(hangarView!!)
         wireInsets(hangarView!!)
         currentView = hangarView
         hangarView?.resume()
@@ -166,7 +173,7 @@ class MainActivity : ComponentActivity() {
                 if (directLoadout != null) endDirectRun() else returnToHangar(yenEarned, fadeFromWhite)
             }
         }
-        setContentView(gameView)
+        setSceneContent(gameView!!)
         wireInsets(gameView!!)
         currentView = gameView
         gameView?.resume()
@@ -211,7 +218,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        setContentView(hangarView)
+        setSceneContent(hangarView!!)
         wireInsets(hangarView!!)
         currentView = hangarView
         // resetForReturn BEFORE resume — state.phase must be BROWSING before the thread starts,
@@ -292,13 +299,20 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        activityResumed = false
         super.onPause()
+        inputRouter.reset()
         hangarView?.pause()
         gameView?.pause()
         SoundManager.pause()   // catch-all for phases not handled inside gameView.pause()
     }
 
     override fun onDestroy() {
+        activityResumed = false
+        appUpdater?.close()
+        appUpdater = null
+        settingsDialog?.dismiss()
+        settingsDialog = null
         super.onDestroy()
         deviceListener?.let {
             (getSystemService(INPUT_SERVICE) as android.hardware.input.InputManager)
@@ -310,6 +324,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        activityResumed = true
+        configureRefreshRate()
+        appUpdater?.onResume()
+        if (settingsDialog?.isShowing == true) return
         val gameShowing = currentView == gameView
         if (shouldResumeAudio(gameShowing, gameShowing && gameView?.isRunPaused() == true)) {
             SoundManager.resume()
@@ -326,9 +344,90 @@ class MainActivity : ComponentActivity() {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             setupFullscreen()
+        } else if (activityResumed && settingsDialog == null) {
+            // Notification shade or another window can steal focus without onPause.
+            // Keep the pause screen rendering, but require an intentional resume.
+            inputRouter.reset()
+            if (currentView == gameView) gameView?.let { it.pause(); it.resume() }
+            if (currentView == hangarView) hangarView?.onPause()
         }
     }
 
+    private fun setSceneContent(scene: View) {
+        (scene.parent as? android.view.ViewGroup)?.removeView(scene)
+        val frame = android.widget.FrameLayout(this)
+        frame.addView(scene, android.widget.FrameLayout.LayoutParams(-1, -1))
+        val dp = resources.displayMetrics.density
+        val button = android.widget.Button(this).apply {
+            text = if (scene is GameSurfaceView) "Ⅱ" else "☰"
+            textSize = 22f
+            contentDescription = "Pause and pilot settings"
+            setTextColor(0xFF9DE9DA.toInt())
+            setPadding(0,0,0,0)
+            minWidth = 0
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(0xDE142131.toInt()); cornerRadius = 14f * dp
+                setStroke((dp).toInt().coerceAtLeast(1), 0xFF426275.toInt())
+            }
+            setOnClickListener { openPilotSettings() }
+        }
+        val params=android.widget.FrameLayout.LayoutParams((48*dp).toInt(),(48*dp).toInt(),android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL)
+        params.marginEnd=(12*dp).toInt()
+        frame.addView(button,params)
+        frame.setOnApplyWindowInsetsListener { _, insets ->
+            val cutout=if(android.os.Build.VERSION.SDK_INT>=28) insets.displayCutout?.safeInsetRight ?: 0 else 0
+            @Suppress("DEPRECATION")
+            val right=maxOf(cutout,insets.systemWindowInsetRight)
+            params.marginEnd=right+(12*dp).toInt();button.layoutParams=params
+            insets
+        }
+        setContentView(frame)
+    }
+
+    private fun openPilotSettings() {
+        if (settingsDialog != null || !activityResumed) return
+        val game = gameView.takeIf { currentView == it }
+        val hangar = hangarView.takeIf { currentView == it }
+        val wasPaused = game?.isRunPaused() == true
+        game?.pause(); hangar?.pause(); inputRouter.reset(); SoundManager.pause()
+        val dialog=com.astroloop.game.settings.FlightSettingsDialog.create(this,game!=null, onCheckUpdates = { appUpdater?.check() }) { options ->
+            com.astroloop.game.settings.PilotSettings.save(this,options)
+            configureRefreshRate()
+        }
+        settingsDialog=dialog
+        dialog.setOnDismissListener {
+            settingsDialog=null
+            if (activityResumed && !isFinishing && !isDestroyed) {
+                if (game != null && currentView == game) {
+                    if (!wasPaused && game.isRunPaused()) game.onCancel()
+                    game.resume()
+                    if (!game.isRunPaused()) SoundManager.resume()
+                } else if (hangar != null && currentView == hangar) {
+                    hangar.resume(); SoundManager.resume()
+                }
+                setupFullscreen()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun configureRefreshRate() {
+        @Suppress("DEPRECATION")
+        val display = windowManager.defaultDisplay
+        val current = display.mode
+        val saver = (getSystemService(POWER_SERVICE) as android.os.PowerManager).isPowerSaveMode
+        val cap = if (saver) 60f else com.astroloop.game.settings.PilotSettings.current.fps.toFloat()
+        val best = display.supportedModes.filter {
+            it.physicalWidth == current.physicalWidth &&
+                it.physicalHeight == current.physicalHeight && it.refreshRate <= cap + 0.1f
+        }.maxByOrNull { it.refreshRate } ?: return
+        window.attributes = window.attributes.apply { preferredDisplayModeId = best.modeId }
+    }
+
+    // This is Activity's public framework callback. AndroidX's core base class is
+    // library-restricted, so lint also flags the inherited callback and super calls.
+    // Preserve its dispatch chain so Back and unhandled keys reach the framework.
+    @android.annotation.SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         // Back keeps going through onBackPressedDispatcher, which the cabinet overlay already
         // relies on to reach its pause screen rather than leaving the run.

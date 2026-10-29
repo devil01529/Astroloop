@@ -38,6 +38,8 @@ class LaunchContinuityTest {
     private fun launchPoint(m: ScreenMetrics): Pair<Float, Float> = m.width / 2f to m.height / 2f
 
     private val devices = listOf(
+        "Galaxy S24 portrait" to (1080f to 2340f),
+        "Galaxy S24 landscape" to (2340f to 1080f),
         "Pixel 9 Pro portrait" to (1080f to 2424f),
         "Pixel 9 Pro landscape" to (2424f to 1080f),
         "1080p landscape / TV" to (1920f to 1080f),

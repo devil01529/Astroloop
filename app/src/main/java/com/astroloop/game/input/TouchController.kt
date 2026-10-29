@@ -13,6 +13,8 @@ class TouchController {
     private val joystickOrigin = Vector2()
     private val joystickPosition = Vector2()
     private var joystickPointerId = -1
+    private var tapEligible = false
+    private var downTime = 0L
 
     // Output direction (normalized, 0-1 magnitude)
     val moveDirection = Vector2()
@@ -29,8 +31,6 @@ class TouchController {
     var renderScale: Float = 1f
 
     fun handleTouchEvent(event: MotionEvent): Boolean {
-        // The only edit the touch path is allowed to gain. Touch is the premium input and its
-        // hit-testing is deliberately left untouched by the focus work — see a design decision.
         InputModeState.markTouch()
 
         when (event.actionMasked) {
@@ -40,12 +40,14 @@ class TouchController {
                 joystickPosition.set(event.x / renderScale, event.y / renderScale)
                 joystickActive = true
                 joystickPointerId = event.getPointerId(0)
+                tapEligible = true
+                downTime = event.eventTime
                 updateMoveDirection()
                 return true
             }
 
             MotionEvent.ACTION_POINTER_DOWN -> {
-                // Additional finger - could be used for special actions
+                tapEligible = false
                 return true
             }
 
@@ -60,13 +62,21 @@ class TouchController {
                 return true
             }
 
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+            MotionEvent.ACTION_CANCEL -> {
+                // System gestures and interruptions must never select a menu item.
+                reset()
+                return true
+            }
+
+            MotionEvent.ACTION_UP -> {
+                if (!joystickActive) return true
+                joystickPosition.set(event.x / renderScale, event.y / renderScale)
                 // Check for tap (short movement)
                 val dx = joystickPosition.x - joystickOrigin.x
                 val dy = joystickPosition.y - joystickOrigin.y
                 val dist = sqrt(dx * dx + dy * dy)
 
-                if (dist < GameConfig.JOYSTICK_DEAD_ZONE) {
+                if (tapEligible && event.eventTime - downTime <= 350L && dist < GameConfig.JOYSTICK_DEAD_ZONE) {
                     // This was a tap, not a drag
                     lastTapX = joystickOrigin.x
                     lastTapY = joystickOrigin.y
@@ -86,9 +96,11 @@ class TouchController {
                 val pointerId = event.getPointerId(pointerIndex)
 
                 if (pointerId == joystickPointerId) {
-                    // Main joystick finger lifted
-                    joystickActive = false
-                    joystickPointerId = -1
+                    // Hand control to the remaining finger without a sudden movement.
+                    val nextIndex = if (pointerIndex == 0) 1 else 0
+                    joystickPointerId = event.getPointerId(nextIndex)
+                    joystickOrigin.set(event.getX(nextIndex) / renderScale, event.getY(nextIndex) / renderScale)
+                    joystickPosition.set(joystickOrigin)
                     moveDirection.zero()
                     moveMagnitude = 0f
                 }
@@ -110,15 +122,31 @@ class TouchController {
             return
         }
 
-        // Clamp to max radius
-        val clampedDist = distance.coerceAtMost(GameConfig.JOYSTICK_MAX_RADIUS)
+        tapEligible = false // Returning a drag to its origin must never become a menu tap.
+        val maxRadius = getMaxRadius()
+        if (distance > maxRadius) {
+            joystickOrigin.set(joystickPosition.x - dx / distance * maxRadius,
+                joystickPosition.y - dy / distance * maxRadius)
+        }
+        val clampedDist = distance.coerceAtMost(maxRadius)
         moveMagnitude = (clampedDist - GameConfig.JOYSTICK_DEAD_ZONE) /
-                        (GameConfig.JOYSTICK_MAX_RADIUS - GameConfig.JOYSTICK_DEAD_ZONE)
+                        (maxRadius - GameConfig.JOYSTICK_DEAD_ZONE)
         moveMagnitude = moveMagnitude.coerceIn(0f, 1f)
 
         // Normalize direction
         moveDirection.set(dx / distance, dy / distance)
     }
+
+    fun isTapCandidate(event: MotionEvent): Boolean {
+        val dx = event.x / renderScale - joystickOrigin.x
+        val dy = event.y / renderScale - joystickOrigin.y
+        return joystickActive && tapEligible && event.eventTime - downTime <= 350L &&
+            dx * dx + dy * dy < GameConfig.JOYSTICK_DEAD_ZONE * GameConfig.JOYSTICK_DEAD_ZONE
+    }
+
+    fun getMaxRadius(): Float = GameConfig.JOYSTICK_DEAD_ZONE +
+        (GameConfig.JOYSTICK_MAX_RADIUS - GameConfig.JOYSTICK_DEAD_ZONE) /
+        com.astroloop.game.settings.PilotSettings.current.sensitivity
 
     fun consumeTap(): Boolean = hasTap.getAndSet(false)
 
@@ -131,6 +159,7 @@ class TouchController {
     fun reset() {
         joystickActive = false
         joystickPointerId = -1
+        tapEligible = false
         joystickOrigin.zero()
         joystickPosition.zero()
         moveDirection.zero()

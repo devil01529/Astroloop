@@ -10,3 +10,8 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+
+# Python release tooling and generated release bundles
+__pycache__/
+*.pyc
+/release/

@@ -1,3 +1,7 @@
+> **Astro Loop S24:** [Download the signed APK](https://github.com/devil01529/Astroloop/releases/latest/download/astro-loop-s24.apk) · [Complete release source](https://github.com/devil01529/Astroloop/releases/latest/download/astro-loop-s24-source.zip). Install this update-enabled version once, then open the right-edge pause/settings panel and tap **Updates**. Everyone you share it with uses the same public releases, without a GitHub account. See [how releases and updates work](docs/IN-APP-UPDATES.md).
+
+> **Unofficial Galaxy S24 build:** This source includes realistic ship, asteroid, and cannon artwork, a pause/settings panel, adjustable steering and frame rate, layered backgrounds, low-hull feedback, and interruption pausing. See [build and installation notes](docs/S24-BUILD.md). The upstream links below refer to the original PubDeer release.
+
 <div align="center">
 
 <img src="fastlane/metadata/android/en-US/images/icon.png" width="120" alt="Astro Loop icon">
@@ -28,8 +32,8 @@ Get it on **[F-Droid](https://f-droid.org/packages/com.astroloop.game/)**, or gr
 - **Simple to play.** Steer with a single finger. Your guns fire on their own. Easy to pick up, hard to put down.
 - **Open source.** No black boxes. The whole game is open here on GitHub, GPLv3.
 - **Plays offline.** Works with no signal at all. The whole game lives on your phone.
-- **No ads, no tracking.** Zero internet permission. It collects nothing. Not one byte ever leaves your phone.
-- **No sensitive permissions.** No camera, mic, location, contacts, files or network. It never asks you for a thing.
+- **No ads, no tracking.** Gameplay works offline. The custom updater contacts GitHub only when you choose to check or download an update.
+- **No camera, mic, location or contacts.** The custom updater uses internet access and asks Android to install a verified APK only with your approval.
 - **Free forever.** No price, no in-app purchases, no pay-to-win. The whole game, free.
 
 ## Gameplay
@@ -41,22 +45,22 @@ Get it on **[F-Droid](https://f-droid.org/packages/com.astroloop.game/)**, or gr
 
 ## Building
 
-Requires Android SDK 36 and JDK 17.
+Requires Android SDK 36, build-tools 35.0.0, and a full JDK 17 or newer.
 
 ```bash
-./gradlew assembleDebug
-# output: app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:assembleGameDebug
+# output: app/build/outputs/apk/game/debug/app-game-debug.apk
+./gradlew :app:assembleGameRelease :app:testGameDebugUnitTest :app:lintGameRelease
+# unsigned release: app/build/outputs/apk/game/release/app-game-release-unsigned.apk
 ```
 
-No game engine: everything is drawn as vectors on a Canvas in pure Kotlin.
+No game engine: rendering uses Android Canvas in Kotlin. This custom build adds bundled realistic sprite artwork to the original vector effects.
 
 ## Contributing
 
-This repository does not accept pull requests or code contributions. The code is here so you can
-read it, build it and learn from it, or use it in your own projects under the GPL.
-
-Issues of every kind are welcome: bug reports, feature requests and ideas.
-[Open one here.](https://github.com/PubDeer/astro-loop/issues)
+Report custom S24 build issues in [this repository](https://github.com/devil01529/Astroloop/issues).
+The original game is by [PubDeer](https://github.com/PubDeer/astro-loop).
+You can read, build, and modify the complete source under the GPL.
 
 ## License
 

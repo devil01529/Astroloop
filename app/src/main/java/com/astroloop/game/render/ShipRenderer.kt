@@ -19,6 +19,13 @@ object ShipRenderer {
         startingWeaponId: String,
         alpha: Float = 1f
     ) {
+        if (RealisticArt.drawShip(canvas, x, y, rotation, size, shipColor, pilotColor,
+                startingWeaponId, alpha * shapeRenderer.alphaScale)) {
+            shapeRenderer.setColor(shipColor)
+            shapeRenderer.setStrokeWidth(2f)
+            shapeRenderer.setAlpha(1f)
+            return
+        }
         shapeRenderer.setColor(shipColor)
         shapeRenderer.setAlpha(alpha)
         shapeRenderer.setStrokeWidth(2f)
@@ -158,6 +165,13 @@ object ShipRenderer {
         rotation: Float = 0f,
         alpha: Float = 1f
     ) {
+        if (RealisticArt.drawShip(canvas, x, y, rotation, size, shipColor, pilotColor,
+                startingWeaponId, alpha * shapeRenderer.alphaScale, designIndex)) {
+            shapeRenderer.setColor(shipColor)
+            shapeRenderer.setStrokeWidth(2f)
+            shapeRenderer.setAlpha(1f)
+            return
+        }
         if (designIndex == 0) {
             drawShip(canvas, shapeRenderer, x, y, rotation, size, shipColor, pilotColor, startingWeaponId, alpha)
             return

@@ -1,0 +1,75 @@
+name: Signed Android release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing version tag, for example v1.5-s24.4'
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: android-release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  release:
+    # Enable after the repository owner has configured both encrypted secrets.
+    # The ChatGPT GitHub connection can publish releases but cannot manage secrets.
+    if: vars.S24_SIGNING_CONFIGURED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+      - name: Build and test
+        run: ./gradlew --no-daemon --max-workers=2 -PupdateRepository="$GITHUB_REPOSITORY" :app:assembleGameRelease :app:testGameDebugUnitTest :app:lintGameRelease
+      - name: Sign with the existing S24 key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/signing.jks"
+          mkdir -p release
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -p 4 app/build/outputs/apk/game/release/app-game-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign --ks "$RUNNER_TEMP/signing.jks" --ks-key-alias astro-loop-s24 --ks-pass env:ANDROID_KEYSTORE_PASSWORD --key-pass env:ANDROID_KEYSTORE_PASSWORD --out release/astro-loop-s24.apk "$RUNNER_TEMP/aligned.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/astro-loop-s24.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c 4 release/astro-loop-s24.apk
+          actual_signer=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs release/astro-loop-s24.apk | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+          test "$actual_signer" = "$(cat scripts/signing-certificate.sha256)"
+          rm -f "$RUNNER_TEMP/signing.jks"
+      - name: Test release metadata generator
+        run: python3 scripts/test_release_manifest.py
+      - name: Prepare update manifest and complete source
+        run: |
+          python3 scripts/release_manifest.py --apk release/astro-loop-s24.apk --metadata app/build/outputs/apk/game/release/output-metadata.json --repository "$GITHUB_REPOSITORY" --tag "$RELEASE_TAG" --output release/update.json
+          python3 scripts/check_release_version.py --manifest release/update.json --repository "$GITHUB_REPOSITORY"
+          git archive --format=zip --prefix=astro-loop-s24/ --output=release/astro-loop-s24-source.zip HEAD
+          cd release
+          sha256sum astro-loop-s24.apk astro-loop-s24-source.zip > SHA256SUMS.txt
+      - name: Publish completed release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$RELEASE_TAG" release/astro-loop-s24.apk release/update.json release/astro-loop-s24-source.zip release/SHA256SUMS.txt --verify-tag --title "Astro Loop S24 $RELEASE_TAG" --generate-notes --latest
+      - name: Remove signing files
+        if: always()
+        run: rm -f "$RUNNER_TEMP/signing.jks"

@@ -1,0 +1,37 @@
+{
+  "upstream_base_commit": "de9720d0dfa3d92f9002d90327602b16e7dbcb68",
+  "release_tag": "v1.5-s24.4",
+  "tests": {
+    "tests": 2462,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  "release_tooling_tests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "lint": {
+    "Warning": 162
+  },
+  "package": "com.astroloop.game.s24",
+  "version": "1.5-s24.4",
+  "version_code": 9,
+  "permissions": [
+    "android.permission.REQUEST_INSTALL_PACKAGES",
+    "android.permission.INTERNET",
+    "android.permission.VIBRATE",
+    "com.astroloop.game.s24.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "apk_sha256": "a1b7d43a0819687839dbf397578c45fd646bb9a76f0ce18375311d89320fac20",
+  "apk_bytes": 54729910,
+  "signer_certificate_sha256": "0b267926375d229a9b62ba2e8dc35ef87540e367867621b8dfe57058fef04c40",
+  "same_signer_as_previous_s24_build": true,
+  "signature_verification": "apksigner verify passed, v2 and v3",
+  "zip_alignment": "zipalign -c 4 passed",
+  "update_repository": "devil01529/Astroloop",
+  "updater_validation": "Robolectric tests cover current release, download and permission/installer handoff, checksum/package/signer/version rejection, cancellation, offline retry, and retaining the pause panel. Transport and Android package metadata are controlled in tests.",
+  "cloud_signing_configured": false,
+  "cloud_signing_blocker": "GitHub integration rejects Actions secret access with HTTP 403",
+  "physical_device_tested": false
+}

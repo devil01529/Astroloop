@@ -23,6 +23,7 @@ object FontManager {
     private var initialized = false
 
     fun initialize(context: Context) {
+        RealisticArt.initialize(context)
         if (initialized) return
         try {
             bodyRegular = ResourcesCompat.getFont(context, R.font.exo2_regular)

@@ -850,11 +850,17 @@ class HangarSurfaceView(
 
     override fun run() {
         var lastTime = System.nanoTime()
+        var refreshCheckTime = lastTime
+        var frameBudget = com.astroloop.game.core.frameBudgetNanos(display?.refreshRate ?: 60f, com.astroloop.game.settings.PilotSettings.current.fps)
 
         while (running) {
             val currentTime = System.nanoTime()
             val deltaTime = (currentTime - lastTime) / 1_000_000_000f
             lastTime = currentTime
+            if (currentTime - refreshCheckTime >= 1_000_000_000L) {
+                frameBudget = com.astroloop.game.core.frameBudgetNanos(display?.refreshRate ?: 60f, com.astroloop.game.settings.PilotSettings.current.fps)
+                refreshCheckTime = currentTime
+            }
 
             // Mirror GameThread's resilience: a throwable from a single update/render
             // frame (e.g. on resume from background) must not kill the process.
@@ -863,6 +869,15 @@ class HangarSurfaceView(
                 render()
             } catch (e: Throwable) {
                 e.printStackTrace()
+            }
+            // Menus and the cabinet should not spin faster than the display can show.
+            val remaining = frameBudget - (System.nanoTime() - currentTime)
+            if (remaining > 0) {
+                try {
+                    Thread.sleep(remaining / 1_000_000, (remaining % 1_000_000).toInt())
+                } catch (_: InterruptedException) {
+                    // Recheck running after teardown wakes us.
+                }
             }
         }
     }

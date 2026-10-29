@@ -29,6 +29,7 @@ class GameThread(
 
         lastFrameTime = System.nanoTime()
         lastFpsTime = System.currentTimeMillis()
+        var frameBudget = frameBudgetNanos(gameView.display?.refreshRate ?: 60f, com.astroloop.game.settings.PilotSettings.current.fps)
 
         while (isRunning) {
             canvas = null
@@ -88,6 +89,7 @@ class GameThread(
                             currentFps = frameCount
                             frameCount = 0
                             lastFpsTime = now
+                            frameBudget = frameBudgetNanos(gameView.display?.refreshRate ?: 60f, com.astroloop.game.settings.PilotSettings.current.fps)
                         }
                     }
                 }
@@ -109,11 +111,10 @@ class GameThread(
             }
 
             // Sleep for remainder of frame budget, measured from frameStart
-            val elapsed = (System.nanoTime() - frameStart) / 1_000_000
-            val targetFrameTime = GameConfig.FRAME_TIME_MS
-            if (elapsed < targetFrameTime) {
+            val remaining = frameBudget - (System.nanoTime() - frameStart)
+            if (remaining > 0) {
                 try {
-                    sleep(targetFrameTime - elapsed)
+                    sleep(remaining / 1_000_000, (remaining % 1_000_000).toInt())
                 } catch (e: InterruptedException) {
                     // Ignore
                 }

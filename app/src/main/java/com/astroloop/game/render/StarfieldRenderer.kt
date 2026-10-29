@@ -20,6 +20,7 @@ data class Star(
 class StarfieldRenderer {
 
     private val stars = mutableListOf<Star>()
+    private val atmosphere = SpaceAtmosphere()
     private val paint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.FILL
@@ -44,6 +45,10 @@ class StarfieldRenderer {
     private var accMoveY = 0f
 
     fun initialize(width: Float, height: Float) {
+        if (width < 1f || height < 1f) {
+            initialized=false; starBitmap?.recycle(); starBitmap=null
+            return
+        }
         screenWidth = width
         screenHeight = height
         stars.clear()
@@ -92,7 +97,7 @@ class StarfieldRenderer {
     }
 
     fun update(shipVelocity: Vector2, deltaTime: Float) {
-        if (!initialized) return
+        if (!initialized || !com.astroloop.game.settings.PilotSettings.current.backgroundMotion) return
 
         for (star in stars) {
             // Move stars opposite to ship direction (creates parallax)
@@ -100,10 +105,8 @@ class StarfieldRenderer {
             star.y -= shipVelocity.y * star.speedFactor * deltaTime
 
             // Wrap around screen
-            if (star.x < 0) star.x += screenWidth
-            if (star.x > screenWidth) star.x -= screenWidth
-            if (star.y < 0) star.y += screenHeight
-            if (star.y > screenHeight) star.y -= screenHeight
+            star.x = wrapStar(star.x, screenWidth)
+            star.y = wrapStar(star.y, screenHeight)
         }
         // Track movement for bitmap dirty check (using near-star speed = fastest)
         accMoveX += kotlin.math.abs(shipVelocity.x * GameConfig.STARS_NEAR_SPEED_FACTOR * deltaTime)
@@ -118,6 +121,7 @@ class StarfieldRenderer {
         val deltaY = camera.y - lastCameraY
         lastCameraX = camera.x
         lastCameraY = camera.y
+        if (!com.astroloop.game.settings.PilotSettings.current.backgroundMotion) return
 
         for (star in stars) {
             // Move stars based on camera movement with parallax
@@ -125,10 +129,8 @@ class StarfieldRenderer {
             star.y -= deltaY * star.speedFactor
 
             // Wrap around screen
-            if (star.x < 0) star.x += screenWidth
-            if (star.x > screenWidth) star.x -= screenWidth
-            if (star.y < 0) star.y += screenHeight
-            if (star.y > screenHeight) star.y -= screenHeight
+            star.x = wrapStar(star.x, screenWidth)
+            star.y = wrapStar(star.y, screenHeight)
         }
         accMoveX += kotlin.math.abs(deltaX * GameConfig.STARS_NEAR_SPEED_FACTOR)
         accMoveY += kotlin.math.abs(deltaY * GameConfig.STARS_NEAR_SPEED_FACTOR)
@@ -137,6 +139,9 @@ class StarfieldRenderer {
     fun render(canvas: Canvas) {
         if (!initialized) return
 
+        if (com.astroloop.game.settings.PilotSettings.current.detailedBackground) {
+            atmosphere.render(canvas, screenWidth, screenHeight, bossMode)
+        }
         val needsRedraw = bitmapDirty || bossMode != lastBossMode || accMoveX > 2f || accMoveY > 2f
         if (needsRedraw) {
             val existing = starBitmap
@@ -164,6 +169,12 @@ class StarfieldRenderer {
                 } else {
                     paint.color = star.color
                 }
+                if (star.size > 2.4f) {
+                    val color=paint.color
+                    paint.alpha=35
+                    bmpCanvas.drawCircle(star.x,star.y,star.size*2.2f,paint)
+                    paint.color=color
+                }
                 bmpCanvas.drawCircle(star.x, star.y, star.size, paint)
             }
 
@@ -184,3 +195,6 @@ class StarfieldRenderer {
         }
     }
 }
+
+internal fun wrapStar(value: Float, extent: Float): Float =
+    if (!value.isFinite() || !extent.isFinite() || extent <= 0f) 0f else ((value % extent) + extent) % extent

@@ -179,6 +179,7 @@ class GameSurfaceView(
     private val vectorRenderer = VectorRenderer(shapeRenderer)
     private val starfieldRenderer = StarfieldRenderer()
     private val hudRenderer = HUDRenderer()
+    private val hullWarning = com.astroloop.game.render.HullWarning()
     private val upgradeSelectionRenderer = UpgradeSelectionRenderer()
     private val debugMenuRenderer = DebugMenuRenderer()
     private val debugButton = DebugFloatingButton(radiusPx = 54f)
@@ -6509,7 +6510,7 @@ class GameSurfaceView(
             val desertKnob = touchController.getJoystickPosition()
             stickReadout.render(
                 canvas, desertOrigin.x, desertOrigin.y, desertKnob.x, desertKnob.y,
-                GameConfig.JOYSTICK_DEAD_ZONE, GameConfig.JOYSTICK_MAX_RADIUS,
+                GameConfig.JOYSTICK_DEAD_ZONE, touchController.getMaxRadius(),
                 desertPlayerAccentColor
             )
         }
@@ -8457,6 +8458,9 @@ class GameSurfaceView(
         // Screen-space rendering (HUD)
         val graceAlpha = if (state.graceTimer > 0f) (1f - state.graceTimer / 0.5f).coerceIn(0f, 1f) else 1f
         val hudAlpha = graceAlpha * state.hudFadeAlpha
+        if (state.phase == GamePhase.PLAYING && ship.isActive && !state.isPaused) {
+            hullWarning.render(canvas, screenWidth, screenHeight, ship.health, ship.maxHealth, hudAlpha)
+        }
         hudRenderer.render(canvas, state, ship, hudAlpha)
 
         // The stick readout sits in the HUD layer, so every overlay drawn after renderPlaying —
@@ -8466,7 +8470,7 @@ class GameSurfaceView(
             val knob = touchController.getJoystickPosition()
             stickReadout.render(
                 canvas, origin.x, origin.y, knob.x, knob.y,
-                GameConfig.JOYSTICK_DEAD_ZONE, GameConfig.JOYSTICK_MAX_RADIUS,
+                GameConfig.JOYSTICK_DEAD_ZONE, touchController.getMaxRadius(),
                 // The same expression the death explosion uses, so the readout turns red with
                 // the ship on the corruption run rather than staying the one white thing left.
                 if (state.isCorruptionRun) Boss.CORRUPTION_COLOR else ship.shipColor
@@ -8658,7 +8662,7 @@ class GameSurfaceView(
             val moved = (dx * dx + dy * dy) > GameConfig.JOYSTICK_DEAD_ZONE * GameConfig.JOYSTICK_DEAD_ZONE
             val held = (currentTime - tapDownTime) > tapHoldThreshold
 
-            if (!moved && !held) {
+            if (!moved && !held && touchController.isTapCandidate(event)) {
                 if (currentTime - lastTapTime < doubleTapThreshold) {
                     if (!state.isPaused && !state.debugMenuOpen && (state.phase == GamePhase.PLAYING || state.phase == GamePhase.DESERT)) {
                         pause()
@@ -8693,6 +8697,7 @@ class GameSurfaceView(
         // join() MUST stay OUTSIDE the holder lock below: the render thread needs that
         // same monitor to finish its in-flight frame, so holding it here would deadlock.
         gameThread?.pause()
+        touchController.reset()
         // gameThread.pause() joins with a 1s timeout, which can expire during heavy
         // scenes or surface teardown and leave the render thread briefly alive. The
         // pause-screen setup mutates state the render thread reads — notably

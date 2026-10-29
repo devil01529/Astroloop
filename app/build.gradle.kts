@@ -17,6 +17,9 @@ val keystoreProperties = Properties().apply {
     if (hasReleaseKeystore) load(FileInputStream(keystorePropertiesFile))
 }
 
+val updateRepository = providers.gradleProperty("updateRepository").getOrElse("devil01529/Astroloop")
+require(updateRepository.matches(Regex("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")))
+
 android {
     namespace = "com.astroloop.game"
     compileSdk = 36
@@ -31,6 +34,7 @@ android {
 
     defaultConfig {
         applicationId = "com.astroloop.game"
+        buildConfigField("String", "UPDATE_REPOSITORY", "\"$updateRepository\"")
         minSdk = 24
         targetSdk = 36
         versionCode = 6
@@ -43,6 +47,9 @@ android {
     productFlavors {
         create("game") {
             dimension = "edition"
+            applicationIdSuffix = ".s24"
+            versionCode = 9
+            versionNameSuffix = "-s24.4"
             buildConfigField("boolean", "LAB", "false")
         }
         create("tuning") {
