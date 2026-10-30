@@ -4,8 +4,9 @@ Repository: https://github.com/devil01529/Astroloop
 
 ## Players
 
-Install the first update-enabled APK, version 1.5-s24.4, manually over your existing
-Astro Loop S24 installation. Keep the existing app installed to retain progress.
+If you have a version older than 1.5-s24.4, install the latest APK manually over
+your existing Astro Loop S24 installation. Keep the app installed to retain progress.
+Versions 1.5-s24.4 and newer include the updater.
 Choose **Updates** in the right-edge pause/settings panel. If a newer version is
 available, choose **Download**, then **Install**. Android asks for installation
 approval; on Android 8+ it first asks you to allow installs from Astro Loop S24.

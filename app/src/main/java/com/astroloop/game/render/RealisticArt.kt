@@ -38,7 +38,8 @@ object RealisticArt {
             cells[i].set(col * bitmap.width / 3, row * bitmap.height / 3,
                 (col + 1) * bitmap.width / 3, (row + 1) * bitmap.height / 3)
         }
-        // Publish only after the immutable source rectangles are ready.
+        TumblingAsteroidRenderer.initialize(bitmap, cells)
+        // Publish only after the immutable source rectangles and 3D materials are ready.
         atlas = bitmap
     }
 
@@ -94,6 +95,14 @@ object RealisticArt {
     fun drawAsteroid(canvas: Canvas, asteroid: Asteroid): Boolean {
         val bitmap = atlas ?: return false
         if (asteroid.radius <= 0f) return true
+        if (com.astroloop.game.settings.PilotSettings.current.asteroid3d) {
+            val material = when (asteroid.type) {
+                AsteroidType.METAL, AsteroidType.MAGNETIC -> 1
+                AsteroidType.VOLATILE, AsteroidType.TRAIL -> 2
+                else -> 0
+            }
+            if (TumblingAsteroidRenderer.draw(canvas, asteroid, material)) return true
+        }
         val d = drawing.get()!!
         val p = d.paint
         val save = canvas.save()
@@ -131,9 +140,11 @@ object RealisticArt {
             val len = length.coerceAtLeast(w * 2f)
             p.color = color; p.alpha = (alpha.coerceIn(0f, 1f) * 95).toInt(); p.strokeWidth = w * .7f
             canvas.drawLine(-len * 1.4f, 0f, -len * .55f, 0f, p)
-            d.path.rewind(); d.path.moveTo(0f, 0f); d.path.lineTo(-w * .8f, -w * .5f)
-            d.path.lineTo(-len * .65f, -w * .5f); d.path.lineTo(-len * .65f, w * .5f)
-            d.path.lineTo(-w * .8f, w * .5f); d.path.close()
+            d.path.rewind(); d.path.moveTo(-len * .65f, -w * .5f)
+            d.path.lineTo(-w * .7f, -w * .5f)
+            d.path.quadTo(0f, -w * .5f, 0f, 0f)
+            d.path.quadTo(0f, w * .5f, -w * .7f, w * .5f)
+            d.path.lineTo(-len * .65f, w * .5f); d.path.close()
             p.color = 0xFFB6BFC9.toInt(); p.alpha = (alpha.coerceIn(0f, 1f) * 255).toInt()
             canvas.drawPath(d.path, p)
             p.color = 0xFFFFE8BA.toInt(); p.alpha = (alpha.coerceIn(0f, 1f) * 255).toInt(); p.strokeWidth = w * .22f

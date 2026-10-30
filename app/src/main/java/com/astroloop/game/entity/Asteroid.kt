@@ -31,6 +31,20 @@ class Asteroid : Entity() {
         const val BASE_CONTACT_DAMAGE = 20f
     }
 
+    var tumbleX: Float = 0f
+    var tumbleY: Float = 0f
+    var tumbleRateX: Float = .65f
+    var tumbleRateY: Float = .42f
+    var tumbleVariant: Int = 0
+
+    override fun update(deltaTime: Float) {
+        super.update(deltaTime)
+        val step = deltaTime * if (cryoAffected) .35f else 1f
+        val turn = 2f * PI.toFloat()
+        tumbleX = (tumbleX + tumbleRateX * step) % turn
+        tumbleY = (tumbleY + tumbleRateY * step) % turn
+    }
+
     var type: AsteroidType = AsteroidType.ROCK
     var size: AsteroidSize = AsteroidSize.LARGE
     var shapePoints: FloatArray = FloatArray(0)
@@ -107,7 +121,12 @@ class Asteroid : Entity() {
         }
 
         // Random rotation
-        rotationSpeed = (Random.nextFloat() - 0.5f) * 3f
+        rotationSpeed = (Random.nextFloat() - 0.5f) * .8f
+        tumbleX = Random.nextFloat() * 2f * PI.toFloat()
+        tumbleY = Random.nextFloat() * 2f * PI.toFloat()
+        tumbleRateX = (.5f + Random.nextFloat() * .45f) * if (Random.nextBoolean()) 1f else -1f
+        tumbleRateY = (.25f + Random.nextFloat() * .45f) * if (Random.nextBoolean()) 1f else -1f
+        tumbleVariant = Random.nextInt(4)
 
         // Generate random asteroid shape
         generateShape()
@@ -225,6 +244,7 @@ class Asteroid : Entity() {
 
     override fun reset() {
         super.reset()
+        tumbleX = 0f; tumbleY = 0f; tumbleRateX = .65f; tumbleRateY = .42f; tumbleVariant = 0
         type = AsteroidType.ROCK
         size = AsteroidSize.LARGE
         shapePoints = FloatArray(0)

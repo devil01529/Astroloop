@@ -1,6 +1,6 @@
 > **Astro Loop S24:** [Download the signed APK](https://github.com/devil01529/Astroloop/releases/latest/download/astro-loop-s24.apk) · [Complete release source](https://github.com/devil01529/Astroloop/releases/latest/download/astro-loop-s24-source.zip). Install this update-enabled version once, then open the right-edge pause/settings panel and tap **Updates**. Everyone you share it with uses the same public releases, without a GitHub account. See [how releases and updates work](docs/IN-APP-UPDATES.md).
 
-> **Unofficial Galaxy S24 build:** This source includes realistic ship, asteroid, and cannon artwork, a pause/settings panel, adjustable steering and frame rate, layered backgrounds, low-hull feedback, and interruption pausing. See [build and installation notes](docs/S24-BUILD.md). The upstream links below refer to the original PubDeer release.
+> **Flight and graphics update — 1.5-s24.5:** Fixed left/right thumb joystick, faster touch response and braking, a 25% larger ship, a soft shield and rounded exhaust, and textured 3D asteroids that tumble around multiple axes. Combat keeps its top-down view. See the [implemented improvement plan](docs/S24-FLIGHT-AND-3D-PLAN.md) and [build and installation notes](docs/S24-BUILD.md). The upstream links below refer to the original PubDeer release.
 
 <div align="center">
 
@@ -29,7 +29,7 @@ Get it on **[F-Droid](https://f-droid.org/packages/com.astroloop.game/)**, or gr
 
 ## System readout
 
-- **Simple to play.** Steer with a single finger. Your guns fire on their own. Easy to pick up, hard to put down.
+- **Simple to play.** Steer with the fixed thumb pad and release it to brake. Your guns fire on their own. Switch the pad to your right hand in flight settings.
 - **Open source.** No black boxes. The whole game is open here on GitHub, GPLv3.
 - **Plays offline.** Works with no signal at all. The whole game lives on your phone.
 - **No ads, no tracking.** Gameplay works offline. The custom updater contacts GitHub only when you choose to check or download an update.
@@ -54,7 +54,7 @@ Requires Android SDK 36, build-tools 35.0.0, and a full JDK 17 or newer.
 # unsigned release: app/build/outputs/apk/game/release/app-game-release-unsigned.apk
 ```
 
-No game engine: rendering uses Android Canvas in Kotlin. This custom build adds bundled realistic sprite artwork to the original vector effects.
+Rendering uses Android Canvas in Kotlin. This custom build combines realistic ship artwork and vector effects with textured, lit 3D asteroid meshes projected into the top-down scene. Flight settings include a simpler asteroid graphics option.
 
 ## Contributing
 

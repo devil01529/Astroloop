@@ -6,7 +6,9 @@ data class PilotOptions(
     val fps: Int = 120,
     val sensitivity: Float = 1f,
     val detailedBackground: Boolean = true,
-    val backgroundMotion: Boolean = true
+    val backgroundMotion: Boolean = true,
+    val rightHandedJoystick: Boolean = false,
+    val asteroid3d: Boolean = true
 ) {
     fun sanitized() = copy(fps = if (fps == 60) 60 else 120,
         sensitivity = if (sensitivity.isFinite()) sensitivity.coerceIn(.7f, 1.6f) else 1f)
@@ -19,7 +21,8 @@ object PilotSettings {
     fun load(context: Context): PilotOptions {
         val p = context.getSharedPreferences("s24_pilot_options", Context.MODE_PRIVATE)
         return PilotOptions(p.getInt("fps",120),p.getFloat("sensitivity",1f),
-            p.getBoolean("background_detail",true),p.getBoolean("background_motion",true))
+            p.getBoolean("background_detail",true),p.getBoolean("background_motion",true),
+            p.getBoolean("right_joystick",false),p.getBoolean("asteroid_3d",true))
             .sanitized().also { current=it }
     }
     fun save(context: Context, options: PilotOptions) {
@@ -27,7 +30,9 @@ object PilotSettings {
         context.getSharedPreferences("s24_pilot_options",Context.MODE_PRIVATE).edit()
             .putInt("fps",clean.fps).putFloat("sensitivity",clean.sensitivity)
             .putBoolean("background_detail",clean.detailedBackground)
-            .putBoolean("background_motion",clean.backgroundMotion).apply()
+            .putBoolean("background_motion",clean.backgroundMotion)
+            .putBoolean("right_joystick",clean.rightHandedJoystick)
+            .putBoolean("asteroid_3d",clean.asteroid3d).apply()
         current=clean
     }
 }

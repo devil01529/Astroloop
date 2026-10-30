@@ -43,7 +43,7 @@ class RealisticArtTest {
         for (type in AsteroidType.values()) {
             bitmap.eraseColor(Color.TRANSPARENT); asteroid.type=type
             assertTrue(RealisticArt.drawAsteroid(canvas, asteroid))
-            assertTrue("Rock center must be visibly solid", Color.alpha(bitmap.getPixel(100,100)) >= 240)
+            assertTrue("$type rock center must be visibly solid: ${Color.alpha(bitmap.getPixel(100,100))}", Color.alpha(bitmap.getPixel(100,100)) >= 240)
             assertEquals(0, Color.alpha(bitmap.getPixel(135,135)))
             assertArrayEquals(original, asteroid.shapePoints, 0f)
             assertEquals(17f, asteroid.health, 0f)

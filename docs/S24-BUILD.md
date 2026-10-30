@@ -14,8 +14,9 @@ license. Original game, art, music, and authorship remain credited to PubDeer.
   of rounding every frame down to 8 milliseconds. This is a frame-rate target,
   not a guarantee of measured performance.
 - Canceled touch gestures no longer select upgrades or menu actions.
-- Lifting the steering finger transfers control to a remaining finger without
-  jumping; multi-finger gestures do not become menu taps.
+- The flight joystick stays fixed inside the safe display area and supports
+  left- or right-handed placement. Releasing its controlling finger brakes the
+  ship; another finger cannot take over steering or turn the gesture into a tap.
 - Uses the final release position when distinguishing a tap from a drag.
 - Clears held movement and queued touches when pausing. Losing window focus
   pauses active play, including the cabinet game.
@@ -48,8 +49,11 @@ if Android asks. If Samsung Auto Blocker prevents installing downloaded APKs,
 review its setting under Settings > Security and privacy > Auto Blocker.
 Restore any installation settings you change after installation.
 
-Open Astro Loop S24. Steer with one finger; weapons fire automatically.
-Double-tap or use Back to pause. Use Samsung's Adaptive motion smoothness setting
+Open Astro Loop S24. Drag the fixed thumb pad to steer; release it to brake.
+Weapons fire automatically. Use the right-edge pause button or Back to pause;
+double-tapping outside the steering pad also pauses. Use flight settings to move
+the joystick to the right, change steering response, or turn 3D asteroids off.
+Use Samsung's Adaptive motion smoothness setting
 if you want the display to allow 120 Hz. The game works without a connection.
 
 ## Validation limits
@@ -76,13 +80,13 @@ Initial build validation: 2433 tests passed, 1 skipped, no failures. Android lin
   unchanged asteroid state, and all three ship/gun families. A render preview
   is exported during the tests for visual inspection.
 
-Latest validation: 2437 tests passed, one skipped, no failures. Android lint completed with no errors. The update uses the same signer as 1.5-s24.1. See S24-VALIDATION.json for details.
+Validation for 1.5-s24.2: 2437 tests passed, one skipped, no failures. Android lint completed with no errors. The update uses the same signer as 1.5-s24.1.
 
 ## Flight polish update — 1.5-s24.3
 
 See [the improvement plan](IMPROVEMENT-PLAN.md) for the implemented changes, test scope, and on-device validation limits. Tap the right-edge pause/menu button for steering response, Balanced/Smooth frame rate, nebula detail, and starfield motion options. Version code 8 updates the existing S24 app without requiring an uninstall.
 
-Latest validation: 2450 tests passed, one skipped, no failures. Android lint completed with no errors. The update uses the same signer as 1.5-s24.1. See S24-VALIDATION.json for details.
+Validation for 1.5-s24.3: 2450 tests passed, one skipped, no failures. Android lint completed with no errors. The update uses the same signer as 1.5-s24.1.
 
 ## GitHub updates — 1.5-s24.4
 
@@ -97,3 +101,25 @@ have an updater. Version code 9 and the original custom signing identity preserv
 in-place update compatibility. Future releases must keep that identity and increase
 the version code. See [in-app updates](IN-APP-UPDATES.md) for release instructions
 and the separate status of optional GitHub Actions signing.
+
+## Fixed flight and 3D asteroid update — 1.5-s24.5
+
+The visible joystick now has a stable centre, a radial dead zone, proportional
+speed, and a larger knob. Its ring stays the same size at every sensitivity;
+reaching the edge always requests full speed. Touch flight accelerates and turns
+more promptly, brakes on release, and keeps the original maximum speed.
+
+The player hull is 25% larger. A rounded shield glow and oval engine exhaust
+replace the old triangular overlays. The collision radius remains unchanged.
+Asteroids use textured, lit 3D meshes with independent roll axes, so different
+faces turn into view. Small rocks use fewer triangles; meshes, materials, and
+drawing buffers are reused. Settings retain a simpler graphics option.
+
+This is a 2.5D presentation improvement within the existing top-down game. It is
+not a full free-flight 3D conversion. No physical S24 has been tested.
+
+Version code 10 uses the same signing identity as the previous S24 releases.
+On 1.5-s24.4, open the pause/settings panel and choose Updates. On earlier
+versions, download and install the APK over your existing app without uninstalling.
+See [the implemented plan](S24-FLIGHT-AND-3D-PLAN.md) and
+[the release validation report](S24-VALIDATION.json).

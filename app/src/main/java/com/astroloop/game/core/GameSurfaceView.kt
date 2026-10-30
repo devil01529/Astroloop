@@ -94,6 +94,7 @@ class GameSurfaceView(
     private val focusRing = FocusRingRenderer()
     // internal, not private: `StickReadoutRetreatTest` drives real frames and reads the fade back.
     internal val stickReadout = StickReadoutRenderer()
+    private val fixedStickRenderer = FixedStickRenderer()
 
     internal fun consumePadActivate(): Boolean = padActivate.getAndSet(false)
 
@@ -800,6 +801,7 @@ class GameSurfaceView(
         screenHeight = m.height
         layout = m.layout
         touchController.renderScale = renderScale
+        syncFlightControls()
         debugMenuRenderer.renderScale = renderScale
     }
 
@@ -1194,7 +1196,14 @@ class GameSurfaceView(
         return false
     }
 
+    private fun syncFlightControls() {
+        touchController.configureFixedJoystick(layout, com.astroloop.game.settings.PilotSettings.current.rightHandedJoystick)
+        touchController.setFixedJoystickEnabled(!state.isPaused && !state.debugMenuOpen &&
+            (state.phase == GamePhase.PLAYING || state.phase == GamePhase.DESERT))
+    }
+
     fun update(deltaTime: Float) {
+        syncFlightControls()
         state.frameCount++
         if (state.firstTunedAtSeconds == null && Tunables.version != state.tunablesVersionAtStart) {
             state.firstTunedAtSeconds = state.survivalTime
@@ -1405,6 +1414,9 @@ class GameSurfaceView(
         stickReadout.update(
             touchController.isJoystickActive() && state.retreatPhase == 0, deltaTime
         )
+
+        ship.precisionSteering = InputModeState.isTouch && touchController.isFixedJoystickEnabled() &&
+            !inFleetAutopilot && state.retreatPhase == 0 && !state.playerStunned && !state.bossEmpFired
 
         // Update ship movement from touch input (skip when stunned, in fleet autopilot, or retreating)
         if (!state.playerStunned && !inFleetAutopilot && state.retreatPhase < 2 &&
@@ -6503,16 +6515,10 @@ class GameSurfaceView(
         // Screen-space: Radio chatter only (no upgrade grid, health, yen, timer)
         hudRenderer.renderRadioOnly(canvas, state)
 
-        // The flashback is driven by the same relative stick combat uses, so it gets the same
-        // readout — in the tank's accent, which is what tells your tank from TB-26's.
         if (!state.isPaused) {
-            val desertOrigin = touchController.getJoystickOrigin()
-            val desertKnob = touchController.getJoystickPosition()
-            stickReadout.render(
-                canvas, desertOrigin.x, desertOrigin.y, desertKnob.x, desertKnob.y,
-                GameConfig.JOYSTICK_DEAD_ZONE, touchController.getMaxRadius(),
-                desertPlayerAccentColor
-            )
+            val knob = touchController.getJoystickPosition()
+            fixedStickRenderer.render(canvas, touchController.fixedLayout, knob.x, knob.y,
+                touchController.isJoystickActive())
         }
 
         // Fade overlay
@@ -8463,18 +8469,11 @@ class GameSurfaceView(
         }
         hudRenderer.render(canvas, state, ship, hudAlpha)
 
-        // The stick readout sits in the HUD layer, so every overlay drawn after renderPlaying —
-        // pause, upgrade cards, game over — covers it rather than fighting it.
-        if (state.phase == GamePhase.PLAYING && !state.isPaused) {
-            val origin = touchController.getJoystickOrigin()
+        // Fixed pad stays visible while manual flight is available, under modal overlays.
+        if (state.phase == GamePhase.PLAYING && !state.isPaused && ship.isActive && state.retreatPhase == 0) {
             val knob = touchController.getJoystickPosition()
-            stickReadout.render(
-                canvas, origin.x, origin.y, knob.x, knob.y,
-                GameConfig.JOYSTICK_DEAD_ZONE, touchController.getMaxRadius(),
-                // The same expression the death explosion uses, so the readout turns red with
-                // the ship on the corruption run rather than staying the one white thing left.
-                if (state.isCorruptionRun) Boss.CORRUPTION_COLOR else ship.shipColor
-            )
+            fixedStickRenderer.render(canvas, touchController.fixedLayout, knob.x, knob.y,
+                touchController.isJoystickActive())
         }
 
         // Astro Loop retreat fade to black overlay (phase 3)
@@ -8555,6 +8554,7 @@ class GameSurfaceView(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        syncFlightControls()
         // The floating opener gets first refusal, in raw device pixels. Above the debug-menu
         // block on purpose: the button must stay usable while the menu is open.
         if (BuildConfig.DEBUG) {

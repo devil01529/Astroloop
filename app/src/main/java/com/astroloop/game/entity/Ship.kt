@@ -8,6 +8,7 @@ class Ship : Entity(), Firer {
     override val isEnemyFirer: Boolean = false
 
     val moveDirection = Vector2()
+    var precisionSteering: Boolean = false
     var speed: Float = GameConfig.SHIP_BASE_SPEED
     var invulnerabilityTimer: Float = 0f
     var isInvulnerable: Boolean = false
@@ -74,14 +75,18 @@ class Ship : Entity(), Firer {
 
             // Accelerate toward target velocity (speed scaled by thumb distance)
             val targetVelocity = direction * speed * magnitude
-            velocity.lerp(targetVelocity, GameConfig.SHIP_ACCELERATION * deltaTime / speed)
+            velocity.lerp(targetVelocity, if (precisionSteering)
+                1f - kotlin.math.exp(-13f * deltaTime.coerceAtLeast(0f))
+                else (GameConfig.SHIP_ACCELERATION * deltaTime / speed).coerceIn(0f, 1f))
 
             // Rotate ship to face movement direction
             val targetRotation = moveDirection.angle()
-            rotation = lerpAngle(rotation, targetRotation, 8f * deltaTime)
+            rotation = lerpAngle(rotation, targetRotation, if (precisionSteering)
+                1f - kotlin.math.exp(-14f * deltaTime.coerceAtLeast(0f)) else 8f * deltaTime)
         } else {
             // Decelerate
-            val decel = GameConfig.SHIP_DECELERATION * deltaTime
+            val decel = (if (precisionSteering) maxOf(GameConfig.SHIP_DECELERATION, speed * 7.5f)
+                else GameConfig.SHIP_DECELERATION) * deltaTime
             val currentSpeed = velocity.length()
             if (currentSpeed > decel) {
                 velocity.mul((currentSpeed - decel) / currentSpeed)
@@ -147,6 +152,7 @@ class Ship : Entity(), Firer {
 
     override fun reset() {
         super.reset()
+        precisionSteering = false
         moveDirection.zero()
         speed = GameConfig.SHIP_BASE_SPEED
         invulnerabilityTimer = 0f

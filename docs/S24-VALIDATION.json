@@ -1,8 +1,8 @@
 {
   "upstream_base_commit": "de9720d0dfa3d92f9002d90327602b16e7dbcb68",
-  "release_tag": "v1.5-s24.4",
+  "release_tag": "v1.5-s24.5",
   "tests": {
-    "tests": 2462,
+    "tests": 2478,
     "failures": 0,
     "errors": 0,
     "skipped": 1
@@ -12,19 +12,19 @@
     "failed": 0
   },
   "lint": {
-    "Warning": 162
+    "Warning": 168
   },
   "package": "com.astroloop.game.s24",
-  "version": "1.5-s24.4",
-  "version_code": 9,
+  "version": "1.5-s24.5",
+  "version_code": 10,
   "permissions": [
-    "android.permission.REQUEST_INSTALL_PACKAGES",
     "android.permission.VIBRATE",
+    "android.permission.REQUEST_INSTALL_PACKAGES",
     "android.permission.INTERNET",
     "com.astroloop.game.s24.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
   ],
-  "apk_sha256": "465389e57799a6560775f5c47f5d97a7c5130a6360c0fd358c1ecb76366e8e53",
-  "apk_bytes": 54729910,
+  "apk_sha256": "b72bb14dad78d08832b5b20e7bdd3452d9879332e12706518b82912fe3668340",
+  "apk_bytes": 54738102,
   "signer_certificate_sha256": "0b267926375d229a9b62ba2e8dc35ef87540e367867621b8dfe57058fef04c40",
   "same_signer_as_previous_s24_build": true,
   "signature_verification": "apksigner verify passed, v2 and v3",
@@ -33,5 +33,8 @@
   "updater_validation": "Robolectric tests cover current release, download and permission/installer handoff, checksum/package/signer/version rejection, cancellation, offline retry, and retaining the pause panel. Transport and Android package metadata are controlled in tests.",
   "cloud_signing_configured": false,
   "cloud_signing_blocker": "GitHub integration rejects Actions secret access with HTTP 403",
+  "flight_validation": "Fixed safe-area anchoring, all sensitivity edge speeds, dead zone, pointer ownership, cancellation, handedness, no accidental pad-tap pause, real GameSurface flight/pause integration, and 30/60/120 Hz response tests passed.",
+  "graphics_validation": "Native Android Canvas previews and tests cover all six asteroid materials, opaque textured meshes, multi-axis rolling, collision bounds, unchanged gameplay state, and persisted 3D graphics preference.",
+  "graphics_scope": "2.5D top-down combat with textured and lit 3D asteroid meshes; not a full free-flight 3D conversion.",
   "physical_device_tested": false
 }

@@ -8,7 +8,22 @@ import kotlin.math.sqrt
 
 class TouchController {
 
-    // Joystick state
+    private val fixed = FixedJoystick()
+    private var fixedEnabled = false
+    val fixedLayout: FixedStickLayout get() = fixed.layout
+    val moveDirection: Vector2 get() = if (fixedEnabled) fixed.direction else relativeDirection
+    val moveMagnitude: Float get() = if (fixedEnabled) fixed.magnitude else relativeMagnitude
+
+    fun configureFixedJoystick(layout: com.astroloop.game.core.ScreenLayout, rightHanded: Boolean) {
+        if (fixed.configure(layout, rightHanded)) reset()
+    }
+    fun setFixedJoystickEnabled(enabled: Boolean) {
+        if (fixedEnabled != enabled) { fixedEnabled = enabled; reset() }
+    }
+    fun isFixedJoystickEnabled() = fixedEnabled
+    fun getDeadZone() = if (fixedEnabled) fixed.layout.deadZone else GameConfig.JOYSTICK_DEAD_ZONE
+
+    // Relative gesture tracking remains available to menus and legacy scenes.
     private var joystickActive = false
     private val joystickOrigin = Vector2()
     private val joystickPosition = Vector2()
@@ -17,9 +32,8 @@ class TouchController {
     private var downTime = 0L
 
     // Output direction (normalized, 0-1 magnitude)
-    val moveDirection = Vector2()
-    var moveMagnitude: Float = 0f
-        private set
+    private val relativeDirection = Vector2()
+    private var relativeMagnitude: Float = 0f
 
     // For UI interactions (upgrade selection, restart, etc.)
     var lastTapX: Float = 0f
@@ -32,6 +46,7 @@ class TouchController {
 
     fun handleTouchEvent(event: MotionEvent): Boolean {
         InputModeState.markTouch()
+        if (fixedEnabled) fixed.handle(event, renderScale)
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -40,7 +55,7 @@ class TouchController {
                 joystickPosition.set(event.x / renderScale, event.y / renderScale)
                 joystickActive = true
                 joystickPointerId = event.getPointerId(0)
-                tapEligible = true
+                tapEligible = !fixedEnabled || !fixed.consumedGesture
                 downTime = event.eventTime
                 updateMoveDirection()
                 return true
@@ -86,8 +101,8 @@ class TouchController {
                 // Release joystick
                 joystickActive = false
                 joystickPointerId = -1
-                moveDirection.zero()
-                moveMagnitude = 0f
+                relativeDirection.zero()
+                relativeMagnitude = 0f
                 return true
             }
 
@@ -101,8 +116,8 @@ class TouchController {
                     joystickPointerId = event.getPointerId(nextIndex)
                     joystickOrigin.set(event.getX(nextIndex) / renderScale, event.getY(nextIndex) / renderScale)
                     joystickPosition.set(joystickOrigin)
-                    moveDirection.zero()
-                    moveMagnitude = 0f
+                    relativeDirection.zero()
+                    relativeMagnitude = 0f
                 }
                 return true
             }
@@ -117,8 +132,8 @@ class TouchController {
         val distance = sqrt(dx * dx + dy * dy)
 
         if (distance < GameConfig.JOYSTICK_DEAD_ZONE) {
-            moveDirection.zero()
-            moveMagnitude = 0f
+            relativeDirection.zero()
+            relativeMagnitude = 0f
             return
         }
 
@@ -129,41 +144,42 @@ class TouchController {
                 joystickPosition.y - dy / distance * maxRadius)
         }
         val clampedDist = distance.coerceAtMost(maxRadius)
-        moveMagnitude = (clampedDist - GameConfig.JOYSTICK_DEAD_ZONE) /
+        relativeMagnitude = (clampedDist - GameConfig.JOYSTICK_DEAD_ZONE) /
                         (maxRadius - GameConfig.JOYSTICK_DEAD_ZONE)
-        moveMagnitude = moveMagnitude.coerceIn(0f, 1f)
+        relativeMagnitude = relativeMagnitude.coerceIn(0f, 1f)
 
         // Normalize direction
-        moveDirection.set(dx / distance, dy / distance)
+        relativeDirection.set(dx / distance, dy / distance)
     }
 
     fun isTapCandidate(event: MotionEvent): Boolean {
         val dx = event.x / renderScale - joystickOrigin.x
         val dy = event.y / renderScale - joystickOrigin.y
-        return joystickActive && tapEligible && event.eventTime - downTime <= 350L &&
+        return (!fixedEnabled || !fixed.consumedGesture) && joystickActive && tapEligible && event.eventTime - downTime <= 350L &&
             dx * dx + dy * dy < GameConfig.JOYSTICK_DEAD_ZONE * GameConfig.JOYSTICK_DEAD_ZONE
     }
 
-    fun getMaxRadius(): Float = GameConfig.JOYSTICK_DEAD_ZONE +
+    fun getMaxRadius(): Float = if (fixedEnabled) fixed.layout.radius else GameConfig.JOYSTICK_DEAD_ZONE +
         (GameConfig.JOYSTICK_MAX_RADIUS - GameConfig.JOYSTICK_DEAD_ZONE) /
         com.astroloop.game.settings.PilotSettings.current.sensitivity
 
     fun consumeTap(): Boolean = hasTap.getAndSet(false)
 
-    fun isJoystickActive(): Boolean = joystickActive
+    fun isJoystickActive(): Boolean = if (fixedEnabled) fixed.active else joystickActive
 
-    fun getJoystickOrigin(): Vector2 = joystickOrigin
+    fun getJoystickOrigin(): Vector2 = if (fixedEnabled) fixed.origin else joystickOrigin
 
-    fun getJoystickPosition(): Vector2 = joystickPosition
+    fun getJoystickPosition(): Vector2 = if (fixedEnabled) fixed.knob else joystickPosition
 
     fun reset() {
+        fixed.reset()
         joystickActive = false
         joystickPointerId = -1
         tapEligible = false
         joystickOrigin.zero()
         joystickPosition.zero()
-        moveDirection.zero()
-        moveMagnitude = 0f
+        relativeDirection.zero()
+        relativeMagnitude = 0f
         hasTap.set(false)
     }
 }

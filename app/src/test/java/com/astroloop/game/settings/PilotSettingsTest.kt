@@ -17,6 +17,20 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class PilotSettingsTest {
     private val ctx get()=ApplicationProvider.getApplicationContext<Context>()
+    @Test fun `handedness and 3D preference survive reload and are applied by real controls`() {
+        PilotSettings.save(ctx,PilotOptions())
+        val controller=Robolectric.buildActivity(Activity::class.java).setup()
+        val dialog=FlightSettingsDialog.create(controller.get(),false){PilotSettings.save(ctx,it)}
+        dialog.show()
+        val switches=views(dialog.window!!.decorView).filterIsInstance<Switch>()
+        switches.single {it.text=="Joystick on right"}.isChecked=true
+        switches.single {it.text=="3D tumbling asteroids"}.isChecked=false
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+        val saved=PilotSettings.load(ctx)
+        assertTrue(saved.rightHandedJoystick);assertFalse(saved.asteroid3d)
+        controller.pause().stop().destroy()
+    }
     @Test fun `options persist and malformed values are sanitized`() {
         PilotSettings.save(ctx,PilotOptions(60,1.4f,false,false))
         assertEquals(PilotOptions(60,1.4f,false,false),PilotSettings.load(ctx))

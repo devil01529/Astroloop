@@ -3,6 +3,8 @@ package com.astroloop.game.render
 import android.content.Context
 import android.view.MotionEvent
 import androidx.test.core.app.ApplicationProvider
+import com.astroloop.game.input.FixedStickLayout
+import com.astroloop.game.core.DesignSpace
 import com.astroloop.game.core.GamePhase
 import com.astroloop.game.core.GameSurfaceView
 import com.astroloop.game.data.PersistenceManager
@@ -53,7 +55,9 @@ class StickReadoutRetreatTest {
      */
     private fun fingerDown() {
         view.state.phase = GamePhase.PLAYING
-        val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 400f, 1800f, 0)
+        val pad = FixedStickLayout.forScreen(view.layout, false)
+        val scale = DesignSpace.metricsFor(1280f, 2844f).renderScale
+        val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, pad.x * scale, pad.y * scale, 0)
         try {
             view.onTouchEvent(event)
         } finally {

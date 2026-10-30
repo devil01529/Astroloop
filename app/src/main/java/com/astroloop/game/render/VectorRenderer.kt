@@ -39,6 +39,8 @@ data class FadingTrail(
 class VectorRenderer(
     private val shapeRenderer: ShapeRenderer
 ) {
+    private val playerPresentation = PlayerPresentation()
+
     fun renderFadingTrail(canvas: Canvas, trail: FadingTrail) {
         if (trail.points.size < 2) return
         val fadeMul = (trail.fadeTimer / FadingTrail.FADE_DURATION).coerceIn(0f, 1f)
@@ -71,7 +73,7 @@ class VectorRenderer(
             x = ship.position.x,
             y = ship.position.y,
             rotation = ship.rotation,
-            size = ship.radius,
+            size = ship.radius * PlayerPresentation.HULL_SCALE,
             shipColor = displayColor,
             pilotColor = displayPilotColor,
             startingWeaponId = ship.startingWeaponId,
@@ -99,7 +101,7 @@ class VectorRenderer(
                 x = afterimage.x,
                 y = afterimage.y,
                 rotation = afterimage.rotation,
-                size = ship.radius,
+                size = ship.radius * PlayerPresentation.HULL_SCALE,
                 shipColor = 0xFFFFFFFF.toInt(),
                 pilotColor = 0xFFFFFFFF.toInt(),
                 startingWeaponId = ship.startingWeaponId,
@@ -192,31 +194,11 @@ class VectorRenderer(
             }
         }
 
-        // Shield outline — steady second outline matching ship shape, thickness = shield %
+        // The old triangular shield underlay protruded beneath the textured hull.
         if (ship.currentShield > 0f && ship.maxShield > 0f) {
-            val shieldPercent = (ship.currentShield / ship.maxShield).coerceIn(0f, 1f)
-            val shieldFadeIn = (state.survivalTime / 1f).coerceIn(0f, 1f)
-
-            val shieldScale = 1.3f
-            val size = ship.radius * shieldScale
-            val x = ship.position.x
-            val y = ship.position.y
-            val r = ship.rotation
-
-            val shieldPoints = floatArrayOf(
-                size, 0f,
-                -size * 0.7f, -size * 0.5f,
-                -size * 0.4f, 0f,
-                -size * 0.7f, size * 0.5f
-            )
-
-            shapeRenderer.setColor(displayColor)
-            shapeRenderer.setStrokeWidth(0.5f + 3.5f * shieldPercent)
-            shapeRenderer.setAlpha(0.6f * shieldFadeIn)
-            shapeRenderer.drawPolygon(canvas, x, y, shieldPoints, r)
-
-            shapeRenderer.setAlpha(1f)
-            shapeRenderer.setStrokeWidth(2f)
+            playerPresentation.shield(canvas, ship.position.x, ship.position.y, ship.rotation,
+                ship.radius * PlayerPresentation.HULL_SCALE,
+                (ship.currentShield / ship.maxShield).coerceIn(0f, 1f) * state.survivalTime.coerceIn(0f, 1f))
         }
 
         // Draw ship with weapon-based variation and pilot dot
@@ -226,7 +208,7 @@ class VectorRenderer(
             x = ship.position.x,
             y = ship.position.y,
             rotation = ship.rotation,
-            size = ship.radius,
+            size = ship.radius * PlayerPresentation.HULL_SCALE,
             shipColor = displayColor,
             pilotColor = displayPilotColor,
             startingWeaponId = ship.startingWeaponId,
@@ -243,7 +225,7 @@ class VectorRenderer(
 
             val barWidth = ship.radius * 2f
             val barHeight = 4f
-            val barY = ship.position.y + ship.radius + 8f
+            val barY = ship.position.y + ship.radius * PlayerPresentation.HULL_SCALE + 8f
 
             // Background
             shapeRenderer.setColor(0xFF333333.toInt())
@@ -421,17 +403,8 @@ class VectorRenderer(
     private fun drawThrustEffect(canvas: Canvas, ship: Ship, momentumActive: Boolean = false) {
         val speed = ship.velocity.length()
         if (speed < 20f) return
-
-        val intensity = (speed / 400f).coerceIn(0f, 1f)
-        val thrustBackX = -ship.radius * 0.5f
-        val size = ship.radius * (0.25f + intensity * 0.75f)
-        val color = if (momentumActive) 0xFFFF2200.toInt() else 0xFFFF9933.toInt()
-
-        canvas.save()
-        canvas.translate(ship.position.x, ship.position.y)
-        canvas.rotate(Math.toDegrees(ship.rotation.toDouble()).toFloat())
-        ThrusterDesigns.design01_current(canvas, thrustBackX, 0f, size, shapeRenderer, color)
-        canvas.restore()
+        playerPresentation.exhaust(canvas, ship.position.x, ship.position.y, ship.rotation,
+            ship.radius * PlayerPresentation.HULL_SCALE, (speed / ship.speed.coerceAtLeast(1f)).coerceIn(0f, 1f), momentumActive)
     }
 
     private fun rotatePoint(px: Float, py: Float, rotation: Float): Pair<Float, Float> {
