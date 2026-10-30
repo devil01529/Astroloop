@@ -1,27 +1,32 @@
 {
   "repository": "devil01529/Astroloop",
-  "release_tag": "v1.5-s24.4",
+  "release_tag": "v1.5-s24.5",
   "public_manifest_url": "https://github.com/devil01529/Astroloop/releases/latest/download/update.json",
   "manifest": {
-    "bytes": 282,
-    "sha256": "8c21a3c019f794e573309dd505f0c737125cd138ab31c3cdcf9e05be3502f8f0",
+    "bytes": 283,
+    "sha256": "092516db4e0e110b4d59806dca23e279ddc4b213d92cc46570d959cdccfedde7",
     "final_host": "release-assets.githubusercontent.com"
   },
   "apk": {
-    "bytes": 54729910,
-    "sha256": "465389e57799a6560775f5c47f5d97a7c5130a6360c0fd358c1ecb76366e8e53",
+    "bytes": 54738102,
+    "sha256": "b72bb14dad78d08832b5b20e7bdd3452d9879332e12706518b82912fe3668340",
     "final_host": "release-assets.githubusercontent.com"
   },
   "source": {
-    "bytes": 55597791,
-    "sha256": "454aed33a2cac273d0f158d493b37236539d266598e07182d7e2841f3716729a",
+    "bytes": 56195047,
+    "sha256": "1012e6b871e3abb19e3071c2447a409aab7950715fca3db348e1b3b338a43e45",
     "final_host": "release-assets.githubusercontent.com"
   },
   "checksums": {
     "bytes": 255,
-    "sha256": "6fc95437e9de12c647678d7c961fb02bd599e56a86621ac1bb790885c5b13ba7",
+    "sha256": "6c2432bd96c6780e92eeedc74a1157dda665c64b98c30b8d25adf74b0f44caa6",
     "final_host": "release-assets.githubusercontent.com"
   },
   "downloaded_apk_signature_verification": "passed",
-  "physical_device_tested": false
+  "physical_device_tested": false,
+  "source_commit": "b0bd00822d702f9178d7fd0dad5a490f20d18a1b",
+  "downloaded_source_contents_match_release_tag": true,
+  "release_checksums_match_downloads": true,
+  "release_workflow": "https://github.com/devil01529/Astroloop/actions/runs/41036356082",
+  "verified_at_utc": "2026-10-30T09:53:46.321826+00:00"
 }
