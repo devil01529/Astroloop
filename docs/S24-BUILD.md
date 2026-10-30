@@ -14,9 +14,10 @@ license. Original game, art, music, and authorship remain credited to PubDeer.
   of rounding every frame down to 8 milliseconds. This is a frame-rate target,
   not a guarantee of measured performance.
 - Canceled touch gestures no longer select upgrades or menu actions.
-- The flight joystick stays fixed inside the safe display area and supports
-  left- or right-handed placement. Releasing its controlling finger brakes the
-  ship; another finger cannot take over steering or turn the gesture into a tap.
+- The flight joystick defaults to the bottom centre inside the safe display area.
+  A second thumb already inside the pad can take over when the first lifts;
+  unrelated touches cannot steal steering or turn the gesture into a tap.
+  Releasing both thumbs brakes. Left/right placement remains available.
 - Uses the final release position when distinguishing a tap from a drag.
 - Clears held movement and queued touches when pausing. Losing window focus
   pauses active play, including the cabinet game.
@@ -49,7 +50,8 @@ if Android asks. If Samsung Auto Blocker prevents installing downloaded APKs,
 review its setting under Settings > Security and privacy > Auto Blocker.
 Restore any installation settings you change after installation.
 
-Open Astro Loop S24. Drag the fixed thumb pad to steer; release it to brake.
+Open Astro Loop S24. Drag the fixed centre pad with either thumb to steer; release
+both to brake. Put your other thumb on the pad before lifting to switch hands.
 Weapons fire automatically. Use the right-edge pause button or Back to pause;
 double-tapping outside the steering pad also pauses. Use flight settings to move
 the joystick to the right, change steering response, or turn 3D asteroids off.
@@ -123,3 +125,26 @@ On 1.5-s24.4, open the pause/settings panel and choose Updates. On earlier
 versions, download and install the APK over your existing app without uninstalling.
 See [the implemented plan](S24-FLIGHT-AND-3D-PLAN.md) and
 [the release validation report](S24-VALIDATION.json).
+
+## Centre controls and rock impacts — 1.5-s24.6
+
+This release defaults existing installations to the centred joystick. Its new
+position preference also offers left/right placement. A waiting thumb must have
+started inside the pad and still be inside when the steering thumb lifts.
+
+The hull is now 1.75 times its original drawing size, 40% larger than 1.5-s24.5.
+Asteroid contact follows its rotated nose and wings using a capsule bound.
+Twelve asymmetric asteroid meshes replace the smooth shells. Blended surface
+materials are baked into padded face tiles once, then lit and depth-sorted during
+rendering. Small rocks use fewer faces.
+
+Projectile impacts transfer momentum according to rock mass and hit direction;
+off-centre hits add spin. Ramming destroys the contacted rock after resolving
+momentum and player damage, respecting evasion and invulnerability. Weapon kills
+still require enough damage for the rock's health. Destruction produces separate
+slabs, wedges, and splinters which fade within 1.5 seconds; these are cosmetic,
+not smaller live asteroids, and cannot collide, split, or drop extra loot.
+
+Version code 11 uses the existing signing key and public update feed. See the
+[implemented plan](S24-CENTRE-AND-IMPACT-PLAN.md). Physics is an arcade impulse
+model; no physical S24 measurements or full rigid-body simulation are claimed.

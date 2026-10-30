@@ -13,8 +13,17 @@ object FlightSettingsDialog {
         fun dp(value:Int)=(value*density).toInt()
         val body=LinearLayout(themed).apply { orientation=LinearLayout.VERTICAL;setPadding(dp(24),dp(8),dp(24),dp(12)) }
         fun label(text:String)=TextView(themed).apply { this.text=text;textSize=16f;setTextColor(Color.WHITE);setPadding(0,dp(12),0,dp(6));body.addView(this) }
-        label("Use the fixed thumb pad to steer. Release it to brake. Weapons fire automatically. This menu pauses the action.")
-        val handedness=Switch(themed).apply { text="Joystick on right";isChecked=PilotSettings.current.rightHandedJoystick;setPadding(0,dp(12),0,dp(12)) };body.addView(handedness)
+        label("Steer with either thumb on the centre pad. Put your other thumb on the pad before lifting to switch hands. Release both to brake. Weapons fire automatically.")
+        label("Joystick position")
+        val placement=RadioGroup(themed).apply { orientation=RadioGroup.VERTICAL }
+        val positions=JoystickPlacement.entries.associateWith { position ->
+            RadioButton(themed).apply {
+                id=android.view.View.generateViewId()
+                text=when(position) { JoystickPlacement.CENTER -> "Centre · either hand"; JoystickPlacement.LEFT -> "Left"; JoystickPlacement.RIGHT -> "Right" }
+                placement.addView(this)
+            }
+        }
+        body.addView(placement);placement.check(positions.getValue(PilotSettings.current.joystickPlacement).id)
         label("Frame rate")
         val modes=RadioGroup(themed).apply { orientation=RadioGroup.VERTICAL }
         val balanced=RadioButton(themed).apply { id=android.view.View.generateViewId();text="Balanced · up to 60 FPS" }
@@ -36,7 +45,8 @@ object FlightSettingsDialog {
         return AlertDialog.Builder(themed).setTitle(if(inFlight) "Flight paused" else "Pilot settings")
             .setView(scroll)
             .setPositiveButton(if(inFlight) "Apply & resume" else "Apply") { _,_->
-                apply(PilotOptions(if(modes.checkedRadioButtonId==balanced.id)60 else 120,.7f+steering.progress/10f,detail.isChecked,motion.isChecked,handedness.isChecked,rocks.isChecked))
+                apply(PilotOptions(if(modes.checkedRadioButtonId==balanced.id)60 else 120,.7f+steering.progress/10f,detail.isChecked,motion.isChecked,
+                    positions.entries.first {it.value.id==placement.checkedRadioButtonId}.key,rocks.isChecked))
             }
             .setNegativeButton(if(inFlight) "Resume" else "Close",null)
             .setNeutralButton("Updates",null).create().also { dialog ->

@@ -25,7 +25,7 @@ class FixedFlightIntegrationTest {
         view.surfaceChanged(view.holder, 0, 1080, 2400)
         view.state.phase = GamePhase.PLAYING
         val scale = DesignSpace.metricsFor(1080f, 2400f).renderScale
-        val pad = FixedStickLayout.forScreen(view.layout, false)
+        val pad = FixedStickLayout.forScreen(view.layout)
         fun send(action: Int, x: Float, y: Float) {
             val event = MotionEvent.obtain(0, 20, action, x * scale, y * scale, 0)
             try { view.onTouchEvent(event) } finally { event.recycle() }

@@ -1197,7 +1197,7 @@ class GameSurfaceView(
     }
 
     private fun syncFlightControls() {
-        touchController.configureFixedJoystick(layout, com.astroloop.game.settings.PilotSettings.current.rightHandedJoystick)
+        touchController.configureFixedJoystick(layout, com.astroloop.game.settings.PilotSettings.current.joystickPlacement)
         touchController.setFixedJoystickEnabled(!state.isPaused && !state.debugMenuOpen &&
             (state.phase == GamePhase.PLAYING || state.phase == GamePhase.DESERT))
     }
@@ -2357,6 +2357,7 @@ class GameSurfaceView(
 
         // Process projectile hits on asteroids
         for ((projectile, asteroid) in collisionResult.asteroidHits) {
+            if (!asteroid.isActive) continue
             if (projectile.weaponId == "volatile_detonation") continue
             if (asteroid.fragmentImmunityTimer > 0f) continue
             if (!projectile.isEnemyProjectile) {
@@ -2365,6 +2366,7 @@ class GameSurfaceView(
                 state.telemetryTotalDamageDealt += damage
                 if (isCrit) { state.telemetryCritsThisMinute++; state.telemetryCritsTotal++ }
 
+                AsteroidImpact.projectile(asteroid, projectile, damage)
                 val destroyed = asteroid.takeDamage(damage)
 
                 // Ion Orbiters / Frost Ring: silent against asteroids — they only sound on enemy hits (below, by request).
@@ -2770,69 +2772,75 @@ class GameSurfaceView(
         }
 
         // Process ship hit by asteroid
-        if (collisionResult.shipHit != null) {
+        if (collisionResult.shipHit != null && collisionResult.shipHit.isActive) {
             val asteroid = collisionResult.shipHit
+            val avoided = !ship.isInvulnerable && (tryCrystalDodge() || tryEvade(state))
+            if (!avoided) {
+                AsteroidImpact.ram(ship, asteroid)
 
-            // Try crystal dodge or evasion first
-            // Note: ship.isInvulnerable re-checked here because another hit (e.g. enemy projectile)
-            // may have set invulnerability between checkCollisions() and this processing step
-            if (!ship.isInvulnerable && !tryCrystalDodge() && !tryEvade(state)) {
-                val healthBefore = ship.health
-                val shieldBefore = ship.currentShield
-                val contactDamage = asteroid.getContactDamage()
-                ship.takeDamage(contactDamage)
-                state.telemetryDamageTakenBy["asteroid"] = (state.telemetryDamageTakenBy["asteroid"] ?: 0f) + contactDamage
-                state.telemetryTotalDamageTaken += contactDamage
-                state.lastDamageSource = "asteroid"
-                vibrateHit()
-                // Only play sound if the asteroid sound cooldown has expired — prevents rapid
-                // repetition while continuously touching an asteroid (damage still applies every 1.5s)
-                if (asteroidHitSoundCooldown <= 0f) {
-                    playDamageSound(shieldBefore, ship.currentShield)
-                    asteroidHitSoundCooldown = 3.0f
-                }
-                if (!isNonAstroCorruptionRun) ship.makeInvulnerable()
-
-                // Revenge Protocol: trigger on ship damage
-                val revengeStacks = state.passiveStacks["revenge_protocol"] ?: 0
-                if (revengeStacks > 0) {
-                    state.revengeTimer = revengeStacks * KnobsPassives.revengeSecondsPerStack.value
-                    state.revengeActive = true
-                }
-
-                if (ship.health <= 0) {
-                    handlePlayerDeath()
-                }
-
-                // Volatile asteroid explosion (skip if ship became invulnerable from phoenix or has crystal powers)
-                if (asteroid.type == AsteroidType.VOLATILE && !ship.isInvulnerable && !state.hasCrystalPowers) {
-                    val shieldBeforeVolatile = ship.currentShield
-                    val volatileDmg = asteroid.getExplosionDamage()
-                    ship.takeDamage(volatileDmg)
-                    state.telemetryDamageTakenBy["asteroid"] = (state.telemetryDamageTakenBy["asteroid"] ?: 0f) + volatileDmg
-                    state.telemetryTotalDamageTaken += volatileDmg
+                // Note: ship.isInvulnerable re-checked here because another hit (e.g. enemy projectile)
+                // may have set invulnerability between checkCollisions() and this processing step
+                if (!ship.isInvulnerable) {
+                    val healthBefore = ship.health
+                    val shieldBefore = ship.currentShield
+                    val contactDamage = asteroid.getContactDamage()
+                    ship.takeDamage(contactDamage)
+                    state.telemetryDamageTakenBy["asteroid"] = (state.telemetryDamageTakenBy["asteroid"] ?: 0f) + contactDamage
+                    state.telemetryTotalDamageTaken += contactDamage
+                    state.lastDamageSource = "asteroid"
                     vibrateHit()
-                    playDamageSound(shieldBeforeVolatile, ship.currentShield)
-                    // Revenge re-armed by volatile splash as well
-                    val revengeStacksVolatile = state.passiveStacks["revenge_protocol"] ?: 0
-                    if (revengeStacksVolatile > 0) {
-                        state.revengeTimer = revengeStacksVolatile * KnobsPassives.revengeSecondsPerStack.value
+                    // Only play sound if the asteroid sound cooldown has expired — prevents rapid
+                    // repetition while ramming a dense field; the collision still resolves.
+                    if (asteroidHitSoundCooldown <= 0f) {
+                        playDamageSound(shieldBefore, ship.currentShield)
+                        asteroidHitSoundCooldown = 3.0f
+                    }
+                    if (!isNonAstroCorruptionRun) ship.makeInvulnerable()
+
+                    // Revenge Protocol: trigger on ship damage
+                    val revengeStacks = state.passiveStacks["revenge_protocol"] ?: 0
+                    if (revengeStacks > 0) {
+                        state.revengeTimer = revengeStacks * KnobsPassives.revengeSecondsPerStack.value
                         state.revengeActive = true
                     }
+
                     if (ship.health <= 0) {
                         handlePlayerDeath()
                     }
-                }
 
-                // Radio: big hit / low health
-                if (ship.health > 0f) {
-                    val healthLost = healthBefore - ship.health
-                    if (healthLost > ship.maxHealth * 0.25f) {
-                        radioSystem.onBigHit(state)
-                    } else if (ship.health < ship.maxHealth * 0.20f) {
-                        radioSystem.onLowHealth(state)
+                    // Volatile asteroid explosion (skip if ship became invulnerable from phoenix or has crystal powers)
+                    if (asteroid.type == AsteroidType.VOLATILE && !ship.isInvulnerable && !state.hasCrystalPowers) {
+                        val shieldBeforeVolatile = ship.currentShield
+                        val volatileDmg = asteroid.getExplosionDamage()
+                        ship.takeDamage(volatileDmg)
+                        state.telemetryDamageTakenBy["asteroid"] = (state.telemetryDamageTakenBy["asteroid"] ?: 0f) + volatileDmg
+                        state.telemetryTotalDamageTaken += volatileDmg
+                        vibrateHit()
+                        playDamageSound(shieldBeforeVolatile, ship.currentShield)
+                        // Revenge re-armed by volatile splash as well
+                        val revengeStacksVolatile = state.passiveStacks["revenge_protocol"] ?: 0
+                        if (revengeStacksVolatile > 0) {
+                            state.revengeTimer = revengeStacksVolatile * KnobsPassives.revengeSecondsPerStack.value
+                            state.revengeActive = true
+                        }
+                        if (ship.health <= 0) {
+                            handlePlayerDeath()
+                        }
+                    }
+
+                    // Radio: big hit / low health
+                    if (ship.health > 0f) {
+                        val healthLost = healthBefore - ship.health
+                        if (healthLost > ship.maxHealth * 0.25f) {
+                            radioSystem.onBigHit(state)
+                        } else if (ship.health < ship.maxHealth * 0.20f) {
+                            radioSystem.onLowHealth(state)
+                        }
                     }
                 }
+
+                asteroid.health = 0f
+                handleAsteroidDestroyedWithTrail(asteroid)
             }
         }
 

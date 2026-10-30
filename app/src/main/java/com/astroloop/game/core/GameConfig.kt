@@ -16,6 +16,7 @@ object GameConfig {
     const val SHIELD_REGEN_RATE = 1.0f
     const val SHIELD_REGEN_DELAY = 2f
     const val SHIP_BASE_SIZE = 25f
+    const val SHIP_VISUAL_SCALE = 1.75f
     const val SHIP_ACCELERATION = 800f
     const val SHIP_DECELERATION = 400f
     const val SHIP_INVULNERABILITY_TIME = 1.5f

@@ -17,18 +17,25 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class PilotSettingsTest {
     private val ctx get()=ApplicationProvider.getApplicationContext<Context>()
+    @Test fun `old handedness preferences migrate to centre without losing other settings`() {
+        ctx.getSharedPreferences("s24_pilot_options",Context.MODE_PRIVATE).edit().clear()
+            .putBoolean("right_joystick",true).putInt("fps",60).putFloat("sensitivity",1.3f).commit()
+        val settings=PilotSettings.load(ctx)
+        assertEquals(JoystickPlacement.CENTER,settings.joystickPlacement)
+        assertEquals(60,settings.fps);assertEquals(1.3f,settings.sensitivity,.001f)
+    }
     @Test fun `handedness and 3D preference survive reload and are applied by real controls`() {
         PilotSettings.save(ctx,PilotOptions())
         val controller=Robolectric.buildActivity(Activity::class.java).setup()
         val dialog=FlightSettingsDialog.create(controller.get(),false){PilotSettings.save(ctx,it)}
         dialog.show()
         val switches=views(dialog.window!!.decorView).filterIsInstance<Switch>()
-        switches.single {it.text=="Joystick on right"}.isChecked=true
+        views(dialog.window!!.decorView).filterIsInstance<RadioButton>().single {it.text=="Right"}.performClick()
         switches.single {it.text=="3D tumbling asteroids"}.isChecked=false
         dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
         org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
         val saved=PilotSettings.load(ctx)
-        assertTrue(saved.rightHandedJoystick);assertFalse(saved.asteroid3d)
+        assertEquals(JoystickPlacement.RIGHT,saved.joystickPlacement);assertFalse(saved.asteroid3d)
         controller.pause().stop().destroy()
     }
     @Test fun `options persist and malformed values are sanitized`() {

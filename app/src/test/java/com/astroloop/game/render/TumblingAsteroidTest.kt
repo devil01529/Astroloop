@@ -83,9 +83,9 @@ class TumblingAsteroidTest {
         val state = GameState().apply { survivalTime = 3f }
         val renderer = VectorRenderer(ShapeRenderer()); renderer.renderShip(canvas, ship, state)
         text.textSize = 24f; canvas.drawText("Larger hull · soft shield · rounded exhaust", 190f, 1290f, text)
-        val pad = FixedStickLayout.forScreen(ScreenLayout.compute(960f, 1800f), false)
+        val pad = FixedStickLayout.forScreen(ScreenLayout.compute(960f, 1800f))
         FixedStickRenderer().render(canvas, pad, pad.x, pad.y, false)
-        canvas.drawText("Fixed centre / idle", 350f, 1570f, text)
+        canvas.drawText("Centre pad / either hand", 350f, 1400f, text)
         val out = File("build/reports/s24-flight-3d-preview.png"); out.parentFile!!.mkdirs()
         out.outputStream().use { assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }
         bitmap.recycle()

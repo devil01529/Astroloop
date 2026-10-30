@@ -29,8 +29,8 @@ class LootSystem(
             spawnScorePickup(asteroid.position.x, asteroid.position.y, points, fromEnemy = false)
         }
 
-        // Spawn split asteroids — state carries the clock the health ramp reads
-        spawnSystem.spawnSplitAsteroids(asteroid, state)
+        // A destroyed rock is gone. Fragments are cosmetic shards, not new live hazards.
+        visualEffects.addAsteroidBreak(asteroid)
 
         // Suppress upgrade drops in corruption runs or when fully upgraded
         if (!state.isCorruptionRun && !state.isFullyUpgraded()) {

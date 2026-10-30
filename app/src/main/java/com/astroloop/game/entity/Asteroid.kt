@@ -10,9 +10,9 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 enum class AsteroidType {
-    ROCK,       // Standard, splits on death
-    ICE,        // Faster, shatters into many pieces
-    METAL,      // Slower, takes 2 hits
+    ROCK,       // Standard rock; destruction leaves cosmetic debris
+    ICE,        // Faster, icy material
+    METAL,      // Slower, denser and tougher
     VOLATILE,   // Explodes on death, damages nearby
     MAGNETIC,   // Pulls toward player
     TRAIL       // Leaves damaging wake behind
@@ -29,6 +29,7 @@ class Asteroid : Entity() {
     companion object {
         /** Contact damage before the Astro Loop ramp. */
         const val BASE_CONTACT_DAMAGE = 20f
+        const val SHAPE_VARIANTS = 12
     }
 
     var tumbleX: Float = 0f
@@ -126,7 +127,7 @@ class Asteroid : Entity() {
         tumbleY = Random.nextFloat() * 2f * PI.toFloat()
         tumbleRateX = (.5f + Random.nextFloat() * .45f) * if (Random.nextBoolean()) 1f else -1f
         tumbleRateY = (.25f + Random.nextFloat() * .45f) * if (Random.nextBoolean()) 1f else -1f
-        tumbleVariant = Random.nextInt(4)
+        tumbleVariant = Random.nextInt(SHAPE_VARIANTS)
 
         // Generate random asteroid shape
         generateShape()

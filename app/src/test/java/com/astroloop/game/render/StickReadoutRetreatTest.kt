@@ -55,7 +55,7 @@ class StickReadoutRetreatTest {
      */
     private fun fingerDown() {
         view.state.phase = GamePhase.PLAYING
-        val pad = FixedStickLayout.forScreen(view.layout, false)
+        val pad = FixedStickLayout.forScreen(view.layout)
         val scale = DesignSpace.metricsFor(1280f, 2844f).renderScale
         val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, pad.x * scale, pad.y * scale, 0)
         try {

@@ -187,7 +187,7 @@ class CollisionSystem {
     }
 
     private fun processShipAsteroidHit(ship: Ship): Asteroid? {
-        if (ship.isInvulnerable) return null
+        if (!ship.isActive) return null
 
         val nearShip = spatialHash.query(
             ship.position.x,
@@ -199,7 +199,7 @@ class CollisionSystem {
             val asteroid = entity as? Asteroid ?: continue
             if (!asteroid.isActive) continue
 
-            if (ship.collidesWith(asteroid)) {
+            if (AsteroidImpact.touchesHull(ship, asteroid)) {
                 return asteroid
             }
         }

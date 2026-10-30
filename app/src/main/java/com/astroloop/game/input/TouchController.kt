@@ -14,8 +14,9 @@ class TouchController {
     val moveDirection: Vector2 get() = if (fixedEnabled) fixed.direction else relativeDirection
     val moveMagnitude: Float get() = if (fixedEnabled) fixed.magnitude else relativeMagnitude
 
-    fun configureFixedJoystick(layout: com.astroloop.game.core.ScreenLayout, rightHanded: Boolean) {
-        if (fixed.configure(layout, rightHanded)) reset()
+    fun configureFixedJoystick(layout: com.astroloop.game.core.ScreenLayout,
+        placement: com.astroloop.game.settings.JoystickPlacement = com.astroloop.game.settings.JoystickPlacement.CENTER) {
+        if (fixed.configure(layout, placement)) reset()
     }
     fun setFixedJoystickEnabled(enabled: Boolean) {
         if (fixedEnabled != enabled) { fixedEnabled = enabled; reset() }

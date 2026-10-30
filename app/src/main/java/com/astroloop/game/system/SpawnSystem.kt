@@ -251,6 +251,7 @@ class SpawnSystem(
      * minute T. Inheriting would let a rock that survived a long time seed weak fragments into the
      * part of the run the ramp exists to make lethal.
      */
+    // Retained upstream tuning helper. S24 destruction uses cosmetic RockDebris instead.
     fun spawnSplitAsteroids(parent: Asteroid, state: GameState): List<Asteroid> {
         if (!parent.shouldSplit()) return emptyList()
 

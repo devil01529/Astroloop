@@ -10,7 +10,7 @@ import kotlin.math.PI
 /** Player-only presentation scaling leaves collision and weapon balance unchanged. */
 internal class PlayerPresentation {
     companion object {
-        const val HULL_SCALE = 1.25f
+        const val HULL_SCALE = com.astroloop.game.core.GameConfig.SHIP_VISUAL_SCALE
     }
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val oval = RectF()

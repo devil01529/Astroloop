@@ -1370,6 +1370,9 @@ class VectorRenderer(
     }
 
     fun renderVisualEffects(canvas: Canvas, effectManager: VisualEffectManager) {
+        for (fragment in effectManager.rockDebris.fragments) {
+            if (fragment.active) TumblingAsteroidRenderer.drawFragment(canvas, fragment)
+        }
         // Render explosion/hit effects
         for (effect in effectManager.getEffects()) {
             val alpha = 1f - (effect.age / effect.lifetime)

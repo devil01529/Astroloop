@@ -278,6 +278,12 @@ data class DamageNumber(
 class VisualEffectManager {
     private val effects = mutableListOf<VisualEffect>()
     private val damageNumbers = mutableListOf<DamageNumber>()
+    val rockDebris = RockDebris()
+
+    fun addAsteroidBreak(asteroid: Asteroid) {
+        rockDebris.emit(asteroid)
+        addHitFlash(asteroid.position.x, asteroid.position.y, asteroid.radius * .65f, 0xFFD8CFBB.toInt())
+    }
 
     fun addExplosion(x: Float, y: Float, radius: Float, color: Int = 0xFFFFAA44.toInt()) {
         effects.add(VisualEffect(
@@ -367,6 +373,7 @@ class VisualEffectManager {
 
     fun update(deltaTime: Float) {
         // Update effects
+        rockDebris.update(deltaTime)
         val effectIterator = effects.iterator()
         while (effectIterator.hasNext()) {
             val effect = effectIterator.next()
@@ -409,5 +416,6 @@ class VisualEffectManager {
     fun clear() {
         effects.clear()
         damageNumbers.clear()
+        rockDebris.clear()
     }
 }

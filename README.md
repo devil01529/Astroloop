@@ -1,6 +1,6 @@
 > **Astro Loop S24:** [Download the signed APK](https://github.com/devil01529/Astroloop/releases/latest/download/astro-loop-s24.apk) · [Complete release source](https://github.com/devil01529/Astroloop/releases/latest/download/astro-loop-s24-source.zip). Install this update-enabled version once, then open the right-edge pause/settings panel and tap **Updates**. Everyone you share it with uses the same public releases, without a GitHub account. See [how releases and updates work](docs/IN-APP-UPDATES.md).
 
-> **Flight and graphics update — 1.5-s24.5:** Fixed left/right thumb joystick, faster touch response and braking, a 25% larger ship, a soft shield and rounded exhaust, and textured 3D asteroids that tumble around multiple axes. Combat keeps its top-down view. See the [implemented improvement plan](docs/S24-FLIGHT-AND-3D-PLAN.md) and [build and installation notes](docs/S24-BUILD.md). The upstream links below refer to the original PubDeer release.
+> **Centre controls and rock impacts — 1.5-s24.6:** A centred joystick with two-thumb handover, a ship 40% larger than the previous custom APK, irregular textured 3D rocks, momentum on impacts, and distinct fading fracture debris. Ramming destroys asteroids; weapon hits retain their health rules. Combat keeps its top-down view. See the [implemented improvement plan](docs/S24-CENTRE-AND-IMPACT-PLAN.md) and [build and installation notes](docs/S24-BUILD.md). The upstream links below refer to the original PubDeer release.
 
 <div align="center">
 
@@ -29,7 +29,7 @@ Get it on **[F-Droid](https://f-droid.org/packages/com.astroloop.game/)**, or gr
 
 ## System readout
 
-- **Simple to play.** Steer with the fixed thumb pad and release it to brake. Your guns fire on their own. Switch the pad to your right hand in flight settings.
+- **Simple to play.** Steer with either thumb on the fixed centre pad; release both to brake. Your guns fire on their own. Put your other thumb on the pad before lifting to switch hands. Left/right placement is also available in settings.
 - **Open source.** No black boxes. The whole game is open here on GitHub, GPLv3.
 - **Plays offline.** Works with no signal at all. The whole game lives on your phone.
 - **No ads, no tracking.** Gameplay works offline. The custom updater contacts GitHub only when you choose to check or download an update.

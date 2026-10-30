@@ -15,7 +15,7 @@ import org.robolectric.RobolectricTestRunner
 class FixedJoystickTest {
     @Before fun defaults() { PilotSettings.save(ApplicationProvider.getApplicationContext(), PilotOptions()) }
     private fun controller() = TouchController().apply {
-        configureFixedJoystick(ScreenLayout.compute(960f, 2142f, 20f, 80f, 20f, 80f), false)
+        configureFixedJoystick(ScreenLayout.compute(960f, 2142f, 20f, 80f, 20f, 80f))
         setFixedJoystickEnabled(true)
     }
     private fun send(c: TouchController, action: Int, x: Float, y: Float, ids: IntArray = intArrayOf(0), extraX: Float = 800f, extraY: Float = 100f) {
@@ -23,6 +23,35 @@ class FixedJoystickTest {
         val coords = Array(ids.size) { i -> MotionEvent.PointerCoords().apply { this.x = if (i == 0) x else extraX; this.y = if (i == 0) y else extraY } }
         val event = MotionEvent.obtain(0, 20, action, ids.size, props, coords, 0, 0, 1f, 1f, 0, 0, 0, 0)
         try { c.handleTouchEvent(event) } finally { event.recycle() }
+    }
+    @Test fun `default pad is centred inside safe area in portrait and landscape`() {
+        for (screen in listOf(ScreenLayout.compute(1080f,2400f,24f,100f,40f,80f),
+            ScreenLayout.compute(2400f,1080f,100f,24f,80f,40f))) {
+            val pad=FixedStickLayout.forScreen(screen)
+            assertEquals(screen.safe.centerX,pad.x,.001f)
+            assertTrue(pad.x-pad.radius>screen.safe.left && pad.x+pad.radius<screen.safe.right)
+            assertTrue(pad.y+pad.radius<screen.safe.bottom)
+        }
+    }
+    @Test fun `second thumb inside pad takes over only when first thumb lifts`() {
+        val c=controller();val p=c.fixedLayout
+        send(c,MotionEvent.ACTION_DOWN,p.x-p.radius,p.y)
+        send(c,MotionEvent.ACTION_POINTER_DOWN or (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),p.x-p.radius,p.y,
+            intArrayOf(0,1),p.x+p.radius,p.y)
+        assertEquals(-1f,c.moveDirection.x,.001f)
+        send(c,MotionEvent.ACTION_POINTER_UP,p.x-p.radius,p.y,intArrayOf(0,1),p.x+p.radius,p.y)
+        assertTrue(c.isJoystickActive());assertEquals(1f,c.moveDirection.x,.001f)
+        assertEquals(p.x,c.getJoystickOrigin().x,0f)
+        send(c,MotionEvent.ACTION_UP,p.x+p.radius,p.y,intArrayOf(1))
+        assertEquals(0f,c.moveMagnitude,0f);assertFalse(c.consumeTap())
+    }
+    @Test fun `a waiting thumb that has left the pad cannot take over`() {
+        val c=controller();val p=c.fixedLayout
+        send(c,MotionEvent.ACTION_DOWN,p.x-p.radius,p.y)
+        send(c,MotionEvent.ACTION_POINTER_DOWN or (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),p.x-p.radius,p.y,
+            intArrayOf(0,1),p.x+p.radius,p.y)
+        send(c,MotionEvent.ACTION_POINTER_UP,p.x-p.radius,p.y,intArrayOf(0,1),800f,100f)
+        assertFalse(c.isJoystickActive());assertEquals(0f,c.moveMagnitude,0f)
     }
     @Test fun `long drags never move the fixed centre and reversal remains predictable`() {
         val c = controller(); val pad = c.fixedLayout
@@ -87,7 +116,7 @@ class FixedJoystickTest {
         assertEquals(0f, c.moveMagnitude, 0f); assertFalse(c.consumeTap())
         send(c, MotionEvent.ACTION_DOWN, p.x + p.radius, p.y)
         val landscape = ScreenLayout.compute(2142f, 960f, 80f, 20f, 80f, 40f)
-        c.configureFixedJoystick(landscape, true)
+        c.configureFixedJoystick(landscape, com.astroloop.game.settings.JoystickPlacement.RIGHT)
         assertFalse(c.isJoystickActive()); assertEquals(0f, c.moveMagnitude, 0f)
         val right = c.fixedLayout
         assertTrue(right.x - right.radius > landscape.safe.centerX)
