@@ -148,3 +148,23 @@ not smaller live asteroids, and cannot collide, split, or drop extra loot.
 Version code 11 uses the existing signing key and public update feed. See the
 [implemented plan](S24-CENTRE-AND-IMPACT-PLAN.md). Physics is an arcade impulse
 model; no physical S24 measurements or full rigid-body simulation are claimed.
+
+## Solid asteroid collisions — 1.5-s24.7
+
+Active asteroids now collide with each other. Equal and opposite impulses change
+their trajectories according to mass, with a subdued rebound. Larger rocks and
+metal resist deflection more than smaller or icy rocks. Surface friction transfers
+some sideways motion into spin during glancing impacts. Overlapping rocks separate
+without receiving artificial launch velocity, and separating contacts do not
+bounce again. Rock-to-rock contact does not deal damage, split rocks, or award loot.
+
+Movement and magnetic attraction advance in steps of at most 1/120 second at
+ordinary speeds, shortened further for fast small rocks. A reusable spatial grid
+and a bounded step budget control work in crowded waves. Contacts also continue
+in the brief post-death simulation and freeze with the pause menu.
+
+Collision bounds remain circles in the top-down simulation, independent of the
+textured irregular meshes. This is not polygon-exact 3D rigid-body physics.
+Version code 12 uses the same signing identity and public GitHub update feed.
+Install over the previous S24 app or use Pause > Updates to retain saved progress.
+See the [implementation and validation plan](S24-ASTEROID-COLLISION-PLAN.md).

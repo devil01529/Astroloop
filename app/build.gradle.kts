@@ -48,8 +48,8 @@ android {
         create("game") {
             dimension = "edition"
             applicationIdSuffix = ".s24"
-            versionCode = 11
-            versionNameSuffix = "-s24.6"
+            versionCode = 12
+            versionNameSuffix = "-s24.7"
             buildConfigField("boolean", "LAB", "false")
         }
         create("tuning") {

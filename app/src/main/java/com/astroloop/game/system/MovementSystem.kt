@@ -5,13 +5,14 @@ import com.astroloop.game.core.GameConfig
 import com.astroloop.game.core.GameState
 import com.astroloop.game.entity.*
 import com.astroloop.game.tuning.KnobsAsteroids
-import com.astroloop.game.util.Vector2
+import kotlin.math.sqrt
 
 class MovementSystem {
 
     private var screenWidth: Float = 0f
     private var screenHeight: Float = 0f
     private var camera: Camera? = null
+    private val asteroidContacts = AsteroidContactSystem()
 
     fun initialize(width: Float, height: Float) {
         screenWidth = width
@@ -41,6 +42,7 @@ class MovementSystem {
     }
 
     fun updateAsteroids(asteroids: List<Asteroid>, ship: Ship, deltaTime: Float, gameTime: Float = 0f) {
+        if (deltaTime <= 0f || !deltaTime.isFinite()) return
         for (asteroid in asteroids) {
             if (!asteroid.isActive) continue
 
@@ -53,28 +55,30 @@ class MovementSystem {
             if (asteroid.fragmentImmunityTimer > 0f) {
                 asteroid.fragmentImmunityTimer -= deltaTime
             }
+        }
 
-            // Special behavior for magnetic asteroids
-            if (asteroid.type == AsteroidType.MAGNETIC) {
-                val pullStrength = asteroid.getMagneticPullStrength()
-                val toShip = Vector2(
-                    ship.position.x - asteroid.position.x,
-                    ship.position.y - asteroid.position.y
-                )
-                val dist = toShip.length()
-                if (dist > 0 && dist < KnobsAsteroids.magneticPullRange.value) {
-                    toShip.normalize()
-                    asteroid.velocity.add(
-                        toShip.x * pullStrength * deltaTime,
-                        toShip.y * pullStrength * deltaTime
-                    )
+        var remaining = deltaTime
+        var stepsLeft = 32
+        while (remaining > 0f && stepsLeft > 0) {
+            val step = asteroidContacts.stepDuration(asteroids, remaining, stepsLeft)
+            for (asteroid in asteroids) {
+                if (!asteroid.isActive) continue
+                // Integrate attraction alongside contacts so it does not erase
+                // the deflected trajectory or depend on the display frame rate.
+                if (asteroid.type == AsteroidType.MAGNETIC) {
+                    val dx = ship.position.x - asteroid.position.x
+                    val dy = ship.position.y - asteroid.position.y
+                    val dist = sqrt(dx * dx + dy * dy)
+                    if (dist > 0 && dist < KnobsAsteroids.magneticPullRange.value) {
+                        val pull = asteroid.getMagneticPullStrength() * step / dist
+                        asteroid.velocity.add(dx * pull, dy * pull)
+                    }
                 }
+                asteroid.update(step)
             }
-
-            asteroid.update(deltaTime)
-
-            // Infinite world - no wrap around
-            // Asteroids will be despawned by camera system when too far
+            asteroidContacts.resolve(asteroids)
+            remaining -= step
+            stepsLeft--
         }
     }
 
