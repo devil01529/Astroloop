@@ -3585,6 +3585,11 @@ class HangarSurfaceView(
     /** Whether the render thread is meant to be running. Test-only. */
     internal val renderThreadRunning: Boolean get() = running
 
+    fun refreshOwnerWallet() {
+        state.actualYen = persistence.getYen()
+        state.displayedYen = state.actualYen
+    }
+
     fun resume() {
         // Only with a surface to draw on, as GameSurfaceView.resume() does (#65). Coming back to
         // the app resumes before Android has made the new surface; a thread started then tries to

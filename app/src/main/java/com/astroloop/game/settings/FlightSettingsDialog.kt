@@ -7,7 +7,7 @@ import android.widget.*
 
 /** Native, scrollable controls remain readable with Android font scaling and TalkBack. */
 object FlightSettingsDialog {
-    fun create(context: Context, inFlight: Boolean, onCheckUpdates: () -> Unit = {}, apply: (PilotOptions) -> Unit): AlertDialog {
+    fun create(context: Context, inFlight: Boolean, onCheckUpdates: () -> Unit = {}, onOwnerAccess: () -> Unit = {}, apply: (PilotOptions) -> Unit): AlertDialog {
         val themed=android.view.ContextThemeWrapper(context,android.R.style.Theme_Material_Dialog_Alert)
         val density=context.resources.displayMetrics.density
         fun dp(value:Int)=(value*density).toInt()
@@ -41,6 +41,7 @@ object FlightSettingsDialog {
         val motion=Switch(themed).apply { text="Moving starfield";isChecked=PilotSettings.current.backgroundMotion;setPadding(0,dp(12),0,dp(12)) };body.addView(motion)
         val rocks=Switch(themed).apply { text="3D tumbling asteroids";isChecked=PilotSettings.current.asteroid3d;setPadding(0,dp(12),0,dp(12)) };body.addView(rocks)
         label("Balanced mode and a simple backdrop reduce rendering work. Samsung battery saver may limit the display rate. Settings are saved on this phone.")
+        body.addView(Button(themed).apply { text="Owner access"; setOnClickListener { onOwnerAccess() } })
         val scroll=ScrollView(themed).apply { addView(body) }
         return AlertDialog.Builder(themed).setTitle(if(inFlight) "Flight paused" else "Pilot settings")
             .setView(scroll)

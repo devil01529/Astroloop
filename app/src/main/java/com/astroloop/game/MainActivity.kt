@@ -56,8 +56,33 @@ class MainActivity : ComponentActivity() {
             inputRouter.surface = value as? InputSurface
         }
 
+    private var ownerUnlockPending = false
+    private val ownerUnlock = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
+        val pending = ownerUnlockPending
+        ownerUnlockPending = false
+        if (pending && result.resultCode == android.app.Activity.RESULT_OK) {
+            com.astroloop.game.owner.OwnerMenu.showAuthenticated(this)
+        }
+    }
+
+    private fun openOwnerAccess() {
+        if (!com.astroloop.game.owner.OwnerAccess.authorized) {
+            com.astroloop.game.owner.OwnerMenu.activation(this)
+            return
+        }
+        val keyguard = getSystemService(KEYGUARD_SERVICE) as android.app.KeyguardManager
+        val intent = keyguard.createConfirmDeviceCredentialIntent("Astro Loop owner menu", "Confirm your phone screen lock")
+        if (intent == null) {
+            android.widget.Toast.makeText(this, "Set a secure phone screen lock to open the owner menu.", android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
+        ownerUnlockPending = true
+        ownerUnlock.launch(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.astroloop.game.owner.OwnerAccess.load(this)
 
         // The cabinet overlay swallows back so it can route to its pause screen instead of
         // leaving the run. Everywhere else — including a cabinet-less hangar and mid-game —
@@ -299,6 +324,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        com.astroloop.game.owner.OwnerMenu.dismiss()
         activityResumed = false
         super.onPause()
         inputRouter.reset()
@@ -390,13 +416,14 @@ class MainActivity : ComponentActivity() {
         val hangar = hangarView.takeIf { currentView == it }
         val wasPaused = game?.isRunPaused() == true
         game?.pause(); hangar?.pause(); inputRouter.reset(); SoundManager.pause()
-        val dialog=com.astroloop.game.settings.FlightSettingsDialog.create(this,game!=null, onCheckUpdates = { appUpdater?.check() }) { options ->
+        val dialog=com.astroloop.game.settings.FlightSettingsDialog.create(this,game!=null, onCheckUpdates = { appUpdater?.check() }, onOwnerAccess = { openOwnerAccess() }) { options ->
             com.astroloop.game.settings.PilotSettings.save(this,options)
             configureRefreshRate()
         }
         settingsDialog=dialog
         dialog.setOnDismissListener {
             settingsDialog=null
+            hangar?.refreshOwnerWallet()
             if (activityResumed && !isFinishing && !isDestroyed) {
                 if (game != null && currentView == game) {
                     if (!wasPaused && game.isRunPaused()) game.onCancel()

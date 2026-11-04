@@ -20,9 +20,11 @@ class PersistenceManager(context: Context) {
     }
 
     // Yen
-    fun getYen(): Int = prefs.getInt(KEY_YEN, 0)
-    fun setYen(amount: Int) = prefs.edit().putInt(KEY_YEN, amount).apply()
-    fun addYen(amount: Int) = setYen(getYen() + amount)
+    fun getYen(): Int = if (com.astroloop.game.owner.OwnerAccess.moneyEnabled) com.astroloop.game.owner.OwnerAccess.WALLET else prefs.getInt(KEY_YEN, 0)
+    fun setYen(amount: Int) {
+        if (!com.astroloop.game.owner.OwnerAccess.moneyEnabled) prefs.edit().putInt(KEY_YEN, amount.coerceAtLeast(0)).apply()
+    }
+    fun addYen(amount: Int) = setYen((getYen().toLong() + amount).coerceIn(0, Int.MAX_VALUE.toLong()).toInt())
 
     // Ship unlocks
     fun getUnlockedShips(): Set<String> {

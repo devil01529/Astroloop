@@ -1,5 +1,7 @@
 > **Astro Loop S24:** [Download the signed APK](https://github.com/devil01529/Astroloop/releases/latest/download/astro-loop-s24.apk) · [Complete release source](https://github.com/devil01529/Astroloop/releases/latest/download/astro-loop-s24-source.zip). Install this update-enabled version once, then open the right-edge pause/settings panel and tap **Updates**. Everyone you share it with uses the same public releases, without a GitHub account. See [how releases and updates work](docs/IN-APP-UPDATES.md).
 
+> **Owner menu — 1.5-s24.8:** Signed installation-bound activation and phone screen-lock confirmation protect a private menu with `/money unlimited` and `/money normal`. Other recipients cannot activate it themselves. See [activation instructions and implementation plan](docs/S24-OWNER-MENU.md).
+
 > **Solid asteroid collisions — 1.5-s24.7:** Asteroids now rebound and deflect each other according to size, material, and speed. Glancing contact changes their spin. Short simulation steps catch fast impacts, while a spatial grid limits checks to nearby rocks. The centred joystick, enlarged ship, irregular textured 3D rocks, and distinct fracture debris remain. Ramming destroys asteroids; weapon hits retain their health rules. See the [implemented improvement plan](docs/S24-ASTEROID-COLLISION-PLAN.md) and [build and installation notes](docs/S24-BUILD.md). The upstream links below refer to the original PubDeer release.
 
 <div align="center">

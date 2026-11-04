@@ -1,8 +1,8 @@
 {
   "upstream_base_commit": "de9720d0dfa3d92f9002d90327602b16e7dbcb68",
-  "release_tag": "v1.5-s24.7",
+  "release_tag": "v1.5-s24.8",
   "tests": {
-    "tests": 2506,
+    "tests": 2512,
     "failures": 0,
     "errors": 0,
     "skipped": 1
@@ -12,19 +12,19 @@
     "failed": 0
   },
   "lint": {
-    "Warning": 166
+    "Warning": 169
   },
   "package": "com.astroloop.game.s24",
-  "version": "1.5-s24.7",
-  "version_code": 12,
+  "version": "1.5-s24.8",
+  "version_code": 13,
   "permissions": [
-    "com.astroloop.game.s24.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
-    "android.permission.VIBRATE",
     "android.permission.INTERNET",
-    "android.permission.REQUEST_INSTALL_PACKAGES"
+    "android.permission.REQUEST_INSTALL_PACKAGES",
+    "android.permission.VIBRATE",
+    "com.astroloop.game.s24.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
   ],
-  "apk_sha256": "c7099e3e732c2f8fdae5403ed071b11b9cb7f8b7db7fabe70be4d0023b0a2a36",
-  "apk_bytes": 54754878,
+  "apk_sha256": "40f0895b4f0fa4df7f1e2f12d4ff176793625cb0e71a1f7870db0b93c49eac35",
+  "apk_bytes": 54758974,
   "signer_certificate_sha256": "0b267926375d229a9b62ba2e8dc35ef87540e367867621b8dfe57058fef04c40",
   "same_signer_as_previous_s24_build": true,
   "signature_verification": "apksigner verify passed, v2 and v3",
@@ -41,5 +41,7 @@
   "rock_rendering": "12 irregular boulder meshes with baked blended materials and independent angular shard meshes. Native gallery and actual GameSurface phone-dimension renders inspected.",
   "asteroid_contact_validation": "Head-on, unequal-mass, glancing/spin, momentum and energy, negative-coordinate grid, coincident and separating contacts, chain impacts, 800-rock sparse field, fast small rocks, 30/60/120 Hz consistency, a five-second crowded simulation, and real game/pause/post-death integration passed.",
   "asteroid_contact_scope": "Circular top-down bounds, restitution and Coulomb friction with disc inertias; 120 Hz ordinary substeps and speed-adaptive smaller steps, bounded to 32 per frame. Rock-to-rock contact changes motion without damage or splitting.",
+  "owner_menu_validation": "Issuer and installation binding, invalid signature/input, fail-closed flags, non-depleting wallet, normal balance restoration, overflow protection, unauthorized dialog rejection and command handling tested. Real Android Keystore and Samsung screen-lock flow not physically tested.",
+  "owner_activation_status": "Awaiting the actual owner installation code; no grant has been pre-issued.",
   "physical_device_tested": false
 }

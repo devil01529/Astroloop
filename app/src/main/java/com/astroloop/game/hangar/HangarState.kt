@@ -628,6 +628,8 @@ class HangarState(internal val persistence: PersistenceManager) {
     // --- Yen display (for animation) ---
     @Volatile var displayedYen: Int = 0
     @Volatile var actualYen: Int = 0
+        get() = if (com.astroloop.game.owner.OwnerAccess.moneyEnabled) com.astroloop.game.owner.OwnerAccess.WALLET else field
+        set(value) { if (!com.astroloop.game.owner.OwnerAccess.moneyEnabled) field = value }
     private var yenAnimStartValue: Int = 0
     private var yenAnimTargetValue: Int = 0
     private var yenAnimStartTime: Long = 0L

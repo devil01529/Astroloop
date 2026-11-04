@@ -168,3 +168,7 @@ textured irregular meshes. This is not polygon-exact 3D rigid-body physics.
 Version code 12 uses the same signing identity and public GitHub update feed.
 Install over the previous S24 app or use Pause > Updates to retain saved progress.
 See the [implementation and validation plan](S24-ASTEROID-COLLISION-PLAN.md).
+
+## Owner menu — 1.5-s24.8
+
+Version code 13 adds the installation-bound owner menu. See [activation and commands](S24-OWNER-MENU.md). The first activation requires the installation code from the actual phone. The same signing key preserves in-place update compatibility.
