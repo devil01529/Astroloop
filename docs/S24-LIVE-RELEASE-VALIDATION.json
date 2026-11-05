@@ -1,32 +1,33 @@
 {
   "repository": "devil01529/Astroloop",
-  "release_tag": "v1.5-s24.7",
+  "release_tag": "v1.5-s24.8",
   "public_manifest_url": "https://github.com/devil01529/Astroloop/releases/latest/download/update.json",
   "manifest": {
     "bytes": 283,
-    "sha256": "f2d9fab21e627f4a1c6dbcfde12ae37f27a466a320b55d20135953fe05dec281",
+    "sha256": "a997fce6564999b94d13c231585c21af32887d4257c0d4128ec6ac686968dccc",
     "final_host": "release-assets.githubusercontent.com"
   },
   "apk": {
-    "bytes": 54754878,
-    "sha256": "c7099e3e732c2f8fdae5403ed071b11b9cb7f8b7db7fabe70be4d0023b0a2a36",
+    "bytes": 54758974,
+    "sha256": "40f0895b4f0fa4df7f1e2f12d4ff176793625cb0e71a1f7870db0b93c49eac35",
     "final_host": "release-assets.githubusercontent.com"
   },
   "source": {
-    "bytes": 56849699,
-    "sha256": "00f9670356158a412f6f21da82542bc098d953404558c4e2305e195f44aa6592",
+    "bytes": 56859041,
+    "sha256": "11de7910159e4a0b5838e95eda87444fb47bb0d62d0a080f4ddea8db90655c58",
     "final_host": "release-assets.githubusercontent.com"
   },
   "checksums": {
     "bytes": 255,
-    "sha256": "0981e26d62e6dd99033a1a2a9d769c0e1c99fd1ca538c0efea34470ca042f624",
+    "sha256": "84314165da02e825c5b5c87a95067d8798a6df08d2dcb6c15afa43066cb8bd0c",
     "final_host": "release-assets.githubusercontent.com"
   },
   "downloaded_apk_signature_verification": "passed",
   "physical_device_tested": false,
-  "source_commit": "7283ce3a64a51466521919848e9ac1317481eec7",
+  "source_commit": "7e7c3d2e66febb5f3b7c279977f8cc85ad5b6bbf",
   "source_contents_match_tag": true,
   "all_public_checksums_match": true,
-  "publication_workflow": "https://github.com/devil01529/Astroloop/actions/runs/41829492236",
-  "verified_at_utc": "2026-11-04T12:29:22.952333+00:00"
+  "publication_workflow": "https://github.com/devil01529/Astroloop/actions/runs/41833065669",
+  "verified_at_utc": "2026-11-05T03:33:02.208052+00:00",
+  "owner_activation_status": "Awaiting the actual owner installation code"
 }
